@@ -1,6 +1,10 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from datetime import timedelta
+
+from django.utils import timezone
+
 from .models import Category, DeviceAppointment, MedicalDevice, Room
 
 
