@@ -1,4 +1,6 @@
 from django.core.exceptions import PermissionDenied
+
+from django.http import HttpResponseRedirect
 from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -167,3 +169,18 @@ class ReminderView(ListView):
     def get_queryset(self):
         queryset = DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
         return queryset.order_by("due_date")
+
+
+class AppointmentDeleteView(View):
+    def post(self, request, device_pk, appointment_pk):
+        appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        appointment.delete()
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
+
+
+class AppointmentToggleCompleteView(View):
+    def post(self, request, device_pk, appointment_pk):
+        appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        appointment.completed = not appointment.completed
+        appointment.save(update_fields=["completed"])
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
