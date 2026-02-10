@@ -1,12 +1,14 @@
 from datetime import timedelta
 
 from django.core.exceptions import PermissionDenied
+
+from django.http import HttpResponseRedirect
 from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
 from .models import Category, DeviceAppointment, MedicalDevice, Room
@@ -179,3 +181,18 @@ class ReminderView(ListView):
         elif date_filter == "next_30":
             queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30), completed=False)
         return queryset.order_by("due_date")
+
+
+class AppointmentDeleteView(View):
+    def post(self, request, device_pk, appointment_pk):
+        appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        appointment.delete()
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
+
+
+class AppointmentToggleCompleteView(View):
+    def post(self, request, device_pk, appointment_pk):
+        appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        appointment.completed = not appointment.completed
+        appointment.save(update_fields=["completed"])
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))

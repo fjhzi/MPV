@@ -1,7 +1,7 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from .models import Category, MedicalDevice, Room
+from .models import Category, DeviceAppointment, MedicalDevice, Room
 
 
 class DashboardViewTests(TestCase):
@@ -60,3 +60,60 @@ class StammdatenDeleteTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertTrue(Category.objects.filter(id=self.category.id).exists())
+
+
+class AppointmentActionsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.category = Category.objects.create(name="Labor")
+        self.device = MedicalDevice.objects.create(name="Pump", category=self.category, serial_number="SN-2")
+
+    def test_create_appointment_defaults_to_incomplete(self):
+        response = self.client.post(
+            reverse("appointment-create", kwargs={"pk": self.device.id}),
+            {
+                "appointment_type": DeviceAppointment.AppointmentType.MAINTENANCE,
+                "due_date": "2030-01-01",
+                "note": "jährlich",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        appointment = DeviceAppointment.objects.get(medical_device=self.device)
+        self.assertFalse(appointment.completed)
+
+    def test_toggle_complete_updates_appointment(self):
+        appointment = DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.CALIBRATION,
+            due_date="2030-01-01",
+            completed=False,
+        )
+
+        response = self.client.post(
+            reverse(
+                "appointment-toggle-complete",
+                kwargs={"device_pk": self.device.id, "appointment_pk": appointment.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+        appointment.refresh_from_db()
+        self.assertTrue(appointment.completed)
+
+    def test_delete_appointment_removes_it(self):
+        appointment = DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.CALIBRATION,
+            due_date="2030-01-01",
+        )
+
+        response = self.client.post(
+            reverse(
+                "appointment-delete",
+                kwargs={"device_pk": self.device.id, "appointment_pk": appointment.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(DeviceAppointment.objects.filter(id=appointment.id).exists())
