@@ -10,7 +10,7 @@
       <tr>
         <td><a href="{% url 'device-detail' appointment.medical_device_id %}">{{ appointment.medical_device.name }}</a></td>
         <td>{{ appointment.get_appointment_type_display }}</td>
-        <td class="{% if appointment.days_until_due < 0 %}row-overdue{% elif appointment.days_until_due <= 30 %}row-warning{% endif %}">{{ appointment.due_date }}</td>
+        <td class="{% if appointment.days_until_due < 0 %}reminder-due-overdue{% elif appointment.days_until_due <= 30 %}reminder-due-warning{% endif %}">{{ appointment.due_date }}</td>
         <td>{% if appointment.days_until_due < 0 %}{{ appointment.days_until_due }} (überfällig){% else %}{{ appointment.days_until_due }}{% endif %}</td>
         <td>{% if appointment.completed %}Erledigt{% else %}Offen{% endif %}</td>
       </tr>
