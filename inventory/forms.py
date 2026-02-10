@@ -35,12 +35,20 @@ class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
 
 
 class RoomForm(forms.ModelForm):
     class Meta:
         model = Room
         fields = ["name", "description"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "description": forms.Textarea(attrs={"class": "form-control", "rows": 4}),
+        }
 
 
 class DeviceAppointmentForm(forms.ModelForm):
@@ -57,3 +65,8 @@ class CategoryDocumentForm(forms.ModelForm):
     class Meta:
         model = CategoryDocument
         fields = ["category", "title", "file"]
+        widgets = {
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        }
