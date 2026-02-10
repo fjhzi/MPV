@@ -1,11 +1,9 @@
-from datetime import timedelta
-
 from django.core.exceptions import PermissionDenied
 from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.utils import timezone
+from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
@@ -169,13 +167,4 @@ class ReminderView(ListView):
 
     def get_queryset(self):
         queryset = DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
-        date_filter = self.request.GET.get("date_filter", "next_30")
-        today = timezone.localdate()
-
-        if date_filter == "overdue":
-            queryset = queryset.filter(due_date__lt=today, completed=False)
-        elif date_filter == "next_7":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=7), completed=False)
-        elif date_filter == "next_30":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30), completed=False)
         return queryset.order_by("due_date")
