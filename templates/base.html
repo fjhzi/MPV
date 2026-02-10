@@ -16,10 +16,8 @@
       --mpv-nav-end: #6a4dff;
       --mpv-link: #3156db;
       --mpv-muted: #5b6472;
-      --row-overdue: #f4d9df;
-      --row-warning: #f7efd1;
-      --toggle-track: #d6ddf0;
-      --toggle-knob: #ffffff;
+      --row-overdue: #f8d7da;
+      --row-warning: #fff3cd;
     }
 
     html[data-theme="dark"] {
@@ -32,10 +30,8 @@
       --mpv-nav-end: #232f45;
       --mpv-link: #9ab5ff;
       --mpv-muted: #afbdd6;
-      --row-overdue: rgba(231, 108, 135, 0.26);
-      --row-warning: rgba(226, 192, 95, 0.24);
-      --toggle-track: #3a4d70;
-      --toggle-knob: #f9f3c4;
+      --row-overdue: rgba(248, 88, 112, 0.25);
+      --row-warning: rgba(255, 201, 87, 0.22);
     }
 
     body {
@@ -81,12 +77,10 @@
       width: 64px;
       height: 32px;
       border-radius: 999px;
-      background: linear-gradient(135deg, #7cb9ff 0%, #4f8df3 100%);
-      border: 1px solid rgba(255, 255, 255, 0.35);
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18);
+      background: #2f343d;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       cursor: pointer;
-      transition: background 0.25s ease, border-color 0.25s ease;
-      overflow: hidden;
+      transition: background-color 0.25s ease;
       display: block;
     }
 
@@ -97,44 +91,42 @@
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 4px 10px rgba(17, 24, 39, 0.28);
-      transition: transform 0.28s cubic-bezier(.4, 0, .2, 1), background-color 0.25s ease;
-      z-index: 2;
+      background: #f6f6f6;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+      transition: transform 0.25s ease, background-color 0.25s ease;
     }
 
     .theme-toggle .icon {
       position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 12px;
-      line-height: 1;
-      transition: opacity 0.25s ease;
-      z-index: 1;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      transition: opacity 0.2s ease;
+    }
+
+    .theme-toggle .icon svg {
+      width: 17px;
+      height: 17px;
+      display: block;
     }
 
     .theme-toggle .icon-sun {
-      right: 9px;
+      color: #1b1f24;
       opacity: 1;
-      color: #ffe082;
-      text-shadow: 0 0 8px rgba(255, 224, 130, 0.8);
     }
 
     .theme-toggle .icon-moon {
-      left: 9px;
+      color: #ffffff;
       opacity: 0;
-      color: #dbe7ff;
-      text-shadow: 0 0 8px rgba(219, 231, 255, 0.5);
     }
 
     .theme-toggle input:checked + .track {
-      background: linear-gradient(135deg, #1b2538 0%, #0f1727 100%);
-      border-color: rgba(170, 188, 220, 0.35);
+      background: #f3f3f3;
     }
 
     .theme-toggle input:checked + .track .thumb {
       transform: translateX(32px);
-      background: #e8eeff;
+      background: #000000;
     }
 
     .theme-toggle input:checked + .track .icon-sun {
@@ -146,8 +138,8 @@
     }
 
     .theme-toggle input:focus-visible + .track {
-      outline: 2px solid rgba(255, 255, 255, 0.9);
-      outline-offset: 3px;
+      outline: 2px solid rgba(255, 255, 255, 0.95);
+      outline-offset: 2px;
     }
 
     .card,
@@ -211,9 +203,19 @@
     <label class="theme-toggle mb-0" for="theme-switch">
       <input type="checkbox" id="theme-switch" aria-label="Dark Mode umschalten">
       <span class="track">
-        <span class="icon icon-moon" aria-hidden="true">☾</span>
-        <span class="icon icon-sun" aria-hidden="true">☀</span>
-        <span class="thumb"></span>
+        <span class="thumb" aria-hidden="true">
+          <span class="icon icon-sun">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="4.8" stroke="currentColor" stroke-width="2.1"/>
+              <path d="M12 2.8V5.2M12 18.8V21.2M21.2 12H18.8M5.2 12H2.8M18.55 5.45L16.85 7.15M7.15 16.85L5.45 18.55M18.55 18.55L16.85 16.85M7.15 7.15L5.45 5.45" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="icon icon-moon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M15.5 3.8C13.1 5.1 11.5 7.7 11.5 10.7C11.5 15 15 18.5 19.3 18.5C20.1 18.5 20.8 18.4 21.5 18.1C20.2 20.5 17.7 22.1 14.7 22.1C10 22.1 6.2 18.3 6.2 13.6C6.2 9.8 8.7 6.5 12.1 5.1C13.1 4.7 14.3 4.2 15.5 3.8Z" fill="currentColor"/>
+            </svg>
+          </span>
+        </span>
       </span>
     </label>
   </div>
