@@ -4,36 +4,72 @@
   <h1 class="h3 mb-0">Medizinprodukte</h1>
   <a href="{% url 'device-create' %}" class="btn btn-primary">Neu anlegen</a>
 </div>
-<form method="get" class="card card-body mb-3">
-  <div class="row g-2">
-    <div class="col-md-3"><input class="form-control" type="text" name="q" placeholder="Suche..." value="{{ request.GET.q }}"></div>
-    <div class="col-md-2">
-      <select class="form-select" name="category">
-        <option value="">Kategorie</option>
-        {% for category in categories %}<option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
-      </select>
+<form method="get" id="dashboard-filter-form" class="card card-body mb-3">
+  <div class="d-flex gap-2 align-items-stretch">
+    <div class="flex-grow-1">
+      <input class="form-control h-100" type="text" name="q" placeholder="Suche..." value="{{ request.GET.q }}" autocomplete="off">
     </div>
-    <div class="col-md-2">
-      <select class="form-select" name="room">
-        <option value="">Raum</option>
-        {% for room in rooms %}<option value="{{ room.id }}" {% if request.GET.room == room.id|stringformat:'s' %}selected{% endif %}>{{ room.name }}</option>{% endfor %}
-      </select>
+    <button
+      class="btn btn-outline-primary px-3"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#dashboard-filter-collapse"
+      aria-expanded="{% if request.GET.category or request.GET.room or request.GET.activity_status or request.GET.functional_status %}true{% else %}false{% endif %}"
+      aria-controls="dashboard-filter-collapse"
+    >
+      <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+      <span class="visually-hidden">Filter anzeigen</span>
+    </button>
+  </div>
+
+  <div class="collapse mt-3 {% if request.GET.category or request.GET.room or request.GET.activity_status or request.GET.functional_status %}show{% endif %}" id="dashboard-filter-collapse">
+    <div class="accordion" id="dashboard-filter-accordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header" id="dashboard-filter-heading">
+          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#dashboard-filter-options" aria-expanded="true" aria-controls="dashboard-filter-options">
+            Filteroptionen
+          </button>
+        </h2>
+        <div id="dashboard-filter-options" class="accordion-collapse collapse show" aria-labelledby="dashboard-filter-heading" data-bs-parent="#dashboard-filter-accordion">
+          <div class="accordion-body">
+            <div class="row g-2">
+              <div class="col-md-3">
+                <select class="form-select js-auto-submit-filter" name="category">
+                  <option value="">Kategorie</option>
+                  {% for category in categories %}<option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select js-auto-submit-filter" name="room">
+                  <option value="">Raum</option>
+                  {% for room in rooms %}<option value="{{ room.id }}" {% if request.GET.room == room.id|stringformat:'s' %}selected{% endif %}>{{ room.name }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select js-auto-submit-filter" name="activity_status">
+                  <option value="">Status</option>
+                  <option value="active" {% if request.GET.activity_status == 'active' %}selected{% endif %}>Aktiv</option>
+                  <option value="inactive" {% if request.GET.activity_status == 'inactive' %}selected{% endif %}>Nicht aktiv</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select js-auto-submit-filter" name="functional_status">
+                  <option value="">Zustand</option>
+                  <option value="functional" {% if request.GET.functional_status == 'functional' %}selected{% endif %}>Funktionsfähig</option>
+                  <option value="defective" {% if request.GET.functional_status == 'defective' %}selected{% endif %}>Defekt</option>
+                </select>
+              </div>
+              <div class="col-12 d-flex justify-content-end mt-2">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                  <i class="fa-solid fa-rotate-right" aria-hidden="true"></i>
+                  <span class="ms-1">Filter zurücksetzen</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="col-md-2">
-      <select class="form-select" name="activity_status">
-        <option value="">Status</option>
-        <option value="active" {% if request.GET.activity_status == 'active' %}selected{% endif %}>Aktiv</option>
-        <option value="inactive" {% if request.GET.activity_status == 'inactive' %}selected{% endif %}>Nicht aktiv</option>
-      </select>
-    </div>
-    <div class="col-md-2">
-      <select class="form-select" name="functional_status">
-        <option value="">Zustand</option>
-        <option value="functional" {% if request.GET.functional_status == 'functional' %}selected{% endif %}>Funktionsfähig</option>
-        <option value="defective" {% if request.GET.functional_status == 'defective' %}selected{% endif %}>Defekt</option>
-      </select>
-    </div>
-    <div class="col-md-1 d-grid"><button class="btn btn-outline-primary" type="submit">Filter</button></div>
   </div>
 </form>
 
@@ -65,4 +101,32 @@
   </tbody>
 </table>
 </div>
+
+<script>
+  (function () {
+    const form = document.getElementById('dashboard-filter-form');
+    if (!form) {
+      return;
+    }
+
+    const searchInput = form.querySelector('input[name="q"]');
+    let searchDebounce;
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        window.clearTimeout(searchDebounce);
+        searchDebounce = window.setTimeout(function () {
+          form.submit();
+        }, 350);
+      });
+    }
+
+    const selects = form.querySelectorAll('.js-auto-submit-filter');
+    selects.forEach(function (select) {
+      select.addEventListener('change', function () {
+        form.submit();
+      });
+    });
+  })();
+</script>
 {% endblock %}
