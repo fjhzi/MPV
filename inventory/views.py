@@ -1,12 +1,14 @@
-from datetime import timedelta
+import datetime
 
 from django.core.exceptions import PermissionDenied
+
+from django.http import HttpResponseRedirect
 from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
 from .models import Category, DeviceAppointment, MedicalDevice, Room
@@ -169,13 +171,43 @@ class ReminderView(ListView):
 
     def get_queryset(self):
         queryset = DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
-        date_filter = self.request.GET.get("date_filter", "next_30")
+        date_filter = self.request.GET.get("date_filter", "all_open")
         today = timezone.localdate()
 
+        queryset = queryset.filter(completed=False)
+
         if date_filter == "overdue":
-            queryset = queryset.filter(due_date__lt=today, completed=False)
+            queryset = queryset.filter(due_date__lt=today)
         elif date_filter == "next_7":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=7), completed=False)
+            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=7))
         elif date_filter == "next_30":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30), completed=False)
+            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=30))
         return queryset.order_by("due_date")
+
+
+class ReminderArchiveView(ListView):
+    model = DeviceAppointment
+    template_name = "inventory/reminders_archive.html"
+    context_object_name = "appointments"
+
+    def get_queryset(self):
+        return (
+            DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
+            .filter(completed=True)
+            .order_by("-due_date")
+        )
+
+
+class AppointmentDeleteView(View):
+    def post(self, request, device_pk, appointment_pk):
+        appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        appointment.delete()
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
+
+
+class AppointmentToggleCompleteView(View):
+    def post(self, request, device_pk, appointment_pk):
+        appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        appointment.completed = not appointment.completed
+        appointment.save(update_fields=["completed"])
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
