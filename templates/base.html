@@ -16,10 +16,8 @@
       --mpv-nav-end: #6a4dff;
       --mpv-link: #3156db;
       --mpv-muted: #5b6472;
-      --row-overdue: #f4d9df;
-      --row-warning: #f7efd1;
-      --toggle-track: #d6ddf0;
-      --toggle-knob: #ffffff;
+      --row-overdue: #f8d7da;
+      --row-warning: #fff3cd;
     }
 
     html[data-theme="dark"] {
@@ -32,10 +30,8 @@
       --mpv-nav-end: #232f45;
       --mpv-link: #9ab5ff;
       --mpv-muted: #afbdd6;
-      --row-overdue: rgba(231, 108, 135, 0.26);
-      --row-warning: rgba(226, 192, 95, 0.24);
-      --toggle-track: #3a4d70;
-      --toggle-knob: #f9f3c4;
+      --row-overdue: rgba(248, 88, 112, 0.25);
+      --row-warning: rgba(255, 201, 87, 0.22);
     }
 
     body {
@@ -66,108 +62,88 @@
     .theme-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      color: #fff;
-      font-size: 0.8rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       user-select: none;
     }
 
     .theme-toggle input {
-      display: none;
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
     }
 
     .theme-toggle .track {
       position: relative;
-      width: 68px;
-      height: 34px;
+      width: 64px;
+      height: 32px;
       border-radius: 999px;
-      background: linear-gradient(135deg, #7fb6ff, #5a86ee);
-      transition: background-color 0.25s ease, background-image 0.25s ease;
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
+      background: linear-gradient(135deg, #7cb9ff 0%, #4f8df3 100%);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18);
       cursor: pointer;
+      transition: background 0.25s ease, border-color 0.25s ease;
       overflow: hidden;
+      display: block;
     }
 
-    .theme-toggle .track::before,
-    .theme-toggle .track::after {
-      content: "";
+    .theme-toggle .thumb {
       position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      pointer-events: none;
-      transition: opacity 0.28s ease;
-    }
-
-    .theme-toggle .track::before {
-      opacity: 1;
-      background:
-        radial-gradient(circle at 18% 26%, rgba(255, 255, 255, 0.95) 0 1.5px, transparent 1.6px),
-        radial-gradient(circle at 30% 72%, rgba(255, 255, 255, 0.8) 0 1.5px, transparent 1.6px),
-        radial-gradient(circle at 78% 22%, rgba(255, 255, 255, 0.7) 0 1.2px, transparent 1.3px),
-        radial-gradient(circle at 88% 55%, rgba(255, 255, 255, 0.7) 0 1.3px, transparent 1.4px),
-        linear-gradient(135deg, #2f4262, #212e44);
-    }
-
-    .theme-toggle .track::after {
-      opacity: 0;
-      background:
-        radial-gradient(circle at 72% 25%, rgba(255, 255, 255, 0.45) 0 10px, transparent 10.5px),
-        linear-gradient(135deg, #8eb8ff, #6f90ff 50%, #5773e0 100%);
-    }
-
-    .theme-toggle .knob {
-      position: absolute;
-      top: 3px;
-      left: 3px;
+      top: 2px;
+      left: 2px;
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: var(--toggle-thumb);
-      transition: transform 0.28s cubic-bezier(.34, 1.56, .64, 1), background-color 0.25s ease;
-      box-shadow: 0 4px 12px rgba(15, 23, 36, 0.35);
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(17, 24, 39, 0.28);
+      transition: transform 0.28s cubic-bezier(.4, 0, .2, 1), background-color 0.25s ease;
+      z-index: 2;
     }
 
-    .theme-toggle .knob::before,
-    .theme-toggle .knob::after {
-      content: "";
+    .theme-toggle .icon {
       position: absolute;
-      border-radius: 50%;
-      background: var(--toggle-crater);
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      line-height: 1;
+      transition: opacity 0.25s ease;
+      z-index: 1;
+    }
+
+    .theme-toggle .icon-sun {
+      right: 9px;
+      opacity: 1;
+      color: #ffe082;
+      text-shadow: 0 0 8px rgba(255, 224, 130, 0.8);
+    }
+
+    .theme-toggle .icon-moon {
+      left: 9px;
       opacity: 0;
-      transition: opacity 0.2s ease;
+      color: #dbe7ff;
+      text-shadow: 0 0 8px rgba(219, 231, 255, 0.5);
     }
 
-    .theme-toggle .knob::before {
-      width: 8px;
-      height: 8px;
-      top: 7px;
-      left: 6px;
+    .theme-toggle input:checked + .track {
+      background: linear-gradient(135deg, #1b2538 0%, #0f1727 100%);
+      border-color: rgba(170, 188, 220, 0.35);
     }
 
-    .theme-toggle .knob::after {
-      width: 5px;
-      height: 5px;
-      top: 15px;
-      left: 15px;
+    .theme-toggle input:checked + .track .thumb {
+      transform: translateX(32px);
+      background: #e8eeff;
     }
 
-    .theme-toggle input:checked + .track .knob {
-      transform: translateX(34px);
-    }
-
-    .theme-toggle input:checked + .track::before {
+    .theme-toggle input:checked + .track .icon-sun {
       opacity: 0;
     }
 
-    .theme-toggle input:checked + .track::after {
+    .theme-toggle input:checked + .track .icon-moon {
       opacity: 1;
     }
 
-    .theme-toggle input:checked + .track .knob::before,
-    .theme-toggle input:checked + .track .knob::after {
-      opacity: 1;
+    .theme-toggle input:focus-visible + .track {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 3px;
     }
 
     .card,
@@ -229,9 +205,12 @@
     </div>
 
     <label class="theme-toggle mb-0" for="theme-switch">
-      <span>Theme</span>
       <input type="checkbox" id="theme-switch" aria-label="Dark Mode umschalten">
-      <span class="track"><span class="knob"></span></span>
+      <span class="track">
+        <span class="icon icon-moon" aria-hidden="true">☾</span>
+        <span class="icon icon-sun" aria-hidden="true">☀</span>
+        <span class="thumb"></span>
+      </span>
     </label>
   </div>
 </nav>
