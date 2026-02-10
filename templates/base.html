@@ -16,8 +16,8 @@
       --mpv-nav-end: #6a4dff;
       --mpv-link: #3156db;
       --mpv-muted: #5b6472;
-      --row-overdue: #f8d7da;
-      --row-warning: #fff3cd;
+      --row-overdue: #f4d9df;
+      --row-warning: #f7efd1;
       --toggle-track: #d6ddf0;
       --toggle-knob: #ffffff;
     }
@@ -32,8 +32,8 @@
       --mpv-nav-end: #232f45;
       --mpv-link: #9ab5ff;
       --mpv-muted: #afbdd6;
-      --row-overdue: rgba(248, 88, 112, 0.25);
-      --row-warning: rgba(255, 201, 87, 0.22);
+      --row-overdue: rgba(231, 108, 135, 0.26);
+      --row-warning: rgba(226, 192, 95, 0.24);
       --toggle-track: #3a4d70;
       --toggle-knob: #f9f3c4;
     }
@@ -155,6 +155,14 @@
 
     .row-overdue { background-color: var(--row-overdue); }
     .row-warning { background-color: var(--row-warning); }
+
+    .table td.reminder-due-overdue {
+      background-color: var(--row-overdue) !important;
+    }
+
+    .table td.reminder-due-warning {
+      background-color: var(--row-warning) !important;
+    }
   </style>
 </head>
 <body>
