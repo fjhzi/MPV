@@ -21,6 +21,16 @@ class DashboardViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Monitor")
 
+    def test_search_finds_by_category_name(self):
+        response = self.client.get(reverse("dashboard"), {"q": "EKG"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Monitor")
+
+    def test_search_finds_by_room_name(self):
+        response = self.client.get(reverse("dashboard"), {"q": "A-101"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Monitor")
+
 
 class StammdatenDeleteTests(TestCase):
     def setUp(self):
