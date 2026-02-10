@@ -1,13 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card">
+<div class="card shadow-sm">
+  <div class="card-header bg-transparent py-3">
+    <h1 class="h4 mb-0">Formular</h1>
+  </div>
   <div class="card-body">
-    <h1 class="h4 mb-3">Formular</h1>
-    <form method="post" enctype="multipart/form-data">
+    <form method="post" enctype="multipart/form-data" class="row g-3">
       {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn btn-primary" type="submit">Speichern</button>
-      <a class="btn btn-outline-secondary" href="/">Abbrechen</a>
+      {% for field in form %}
+        <div class="col-12">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+      <div class="col-12 d-flex gap-2 justify-content-end">
+        <a class="btn btn-outline-secondary" href="/">Abbrechen</a>
+        <button class="btn btn-primary px-4" type="submit">Speichern</button>
+      </div>
     </form>
   </div>
 </div>
