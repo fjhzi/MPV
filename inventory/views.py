@@ -162,6 +162,14 @@ class AppointmentCreateView(CreateView):
         return reverse_lazy("device-detail", kwargs={"pk": self.kwargs["pk"]})
 
 
+class AppointmentDeleteView(DeleteView):
+    model = DeviceAppointment
+    template_name = "inventory/confirm_delete.html"
+
+    def get_success_url(self):
+        return reverse_lazy("device-detail", kwargs={"pk": self.object.medical_device_id})
+
+
 class ReminderView(ListView):
     model = DeviceAppointment
     template_name = "inventory/reminders.html"

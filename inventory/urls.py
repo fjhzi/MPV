@@ -3,7 +3,6 @@ from django.urls import path
 from .views import (
     AppointmentCreateView,
     AppointmentDeleteView,
-    AppointmentToggleCompleteView,
     CategoryListCreateView,
     DashboardView,
     MedicalDeviceCreateView,
@@ -21,8 +20,7 @@ urlpatterns = [
     path("devices/<int:pk>/edit/", MedicalDeviceUpdateView.as_view(), name="device-edit"),
     path("devices/<int:pk>/delete/", MedicalDeviceDeleteView.as_view(), name="device-delete"),
     path("devices/<int:pk>/appointments/new/", AppointmentCreateView.as_view(), name="appointment-create"),
-    path("devices/<int:device_pk>/appointments/<int:appointment_pk>/delete/", AppointmentDeleteView.as_view(), name="appointment-delete"),
-    path("devices/<int:device_pk>/appointments/<int:appointment_pk>/toggle-complete/", AppointmentToggleCompleteView.as_view(), name="appointment-toggle-complete"),
+    path("appointments/<int:pk>/delete/", AppointmentDeleteView.as_view(), name="appointment-delete"),
     path("stammdaten/", CategoryListCreateView.as_view(), name="stammdaten"),
     path("reminders/", ReminderView.as_view(), name="reminders"),
     path("reminders/archive/", ReminderArchiveView.as_view(), name="reminders-archive"),

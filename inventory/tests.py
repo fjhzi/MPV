@@ -124,3 +124,27 @@ class ReminderArchiveViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["appointments"]), [new_done, old_done])
         self.assertContains(response, "Zurück zu offenen Terminen")
+
+
+class AppointmentDeleteViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        category = Category.objects.create(name="Delete-Cat")
+        room = Room.objects.create(name="Delete-Room")
+        self.device = MedicalDevice.objects.create(
+            name="Delete-Device",
+            category=category,
+            room=room,
+            serial_number="SN-DEL-1",
+        )
+        self.appointment = DeviceAppointment.objects.create(
+            medical_device=self.device,
+            due_date=timezone.localdate(),
+            completed=False,
+        )
+
+    def test_appointment_delete_removes_appointment_and_redirects_to_device(self):
+        response = self.client.post(reverse("appointment-delete", kwargs={"pk": self.appointment.pk}))
+
+        self.assertRedirects(response, reverse("device-detail", kwargs={"pk": self.device.pk}))
+        self.assertFalse(DeviceAppointment.objects.filter(pk=self.appointment.pk).exists())
