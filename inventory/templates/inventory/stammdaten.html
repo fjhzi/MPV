@@ -41,11 +41,21 @@
   <div class="col-lg-6">
     <div class="card"><div class="card-body">
       <h2 class="h5">Kategorien</h2>
-      <ul>
+      <ul class="list-group list-group-flush">
         {% for category in categories %}
-          <li>{{ category.name }} ({{ category.documents.count }} Dokumente)</li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span>{{ category.name }} ({{ category.documents.count }} Dokumente)</span>
+            {% if request.user.is_staff %}
+              <form method="post" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_category">
+                <input type="hidden" name="category_id" value="{{ category.id }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
+              </form>
+            {% endif %}
+          </li>
         {% empty %}
-          <li class="text-muted">Keine Kategorien.</li>
+          <li class="text-muted list-group-item px-0">Keine Kategorien.</li>
         {% endfor %}
       </ul>
     </div></div>
@@ -53,11 +63,21 @@
   <div class="col-lg-6">
     <div class="card"><div class="card-body">
       <h2 class="h5">Räume</h2>
-      <ul>
+      <ul class="list-group list-group-flush">
         {% for room in rooms %}
-          <li>{{ room.name }}</li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span>{{ room.name }}</span>
+            {% if request.user.is_staff %}
+              <form method="post" class="m-0">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_room">
+                <input type="hidden" name="room_id" value="{{ room.id }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
+              </form>
+            {% endif %}
+          </li>
         {% empty %}
-          <li class="text-muted">Keine Räume.</li>
+          <li class="text-muted list-group-item px-0">Keine Räume.</li>
         {% endfor %}
       </ul>
     </div></div>

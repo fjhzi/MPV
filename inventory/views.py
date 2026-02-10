@@ -1,6 +1,9 @@
 from datetime import timedelta
 
+from django.core.exceptions import PermissionDenied
+from django.db.models import ProtectedError
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
@@ -127,6 +130,19 @@ class CategoryListCreateView(TemplateView):
             form = RoomForm(request.POST)
             if form.is_valid():
                 form.save()
+        elif action == "delete_category":
+            if not request.user.is_staff:
+                raise PermissionDenied
+            category = get_object_or_404(Category, pk=request.POST.get("category_id"))
+            try:
+                category.delete()
+            except ProtectedError:
+                pass
+        elif action == "delete_room":
+            if not request.user.is_staff:
+                raise PermissionDenied
+            room = get_object_or_404(Room, pk=request.POST.get("room_id"))
+            room.delete()
         elif action == "upload_document":
             form = CategoryDocumentForm(request.POST, request.FILES)
             if form.is_valid():
