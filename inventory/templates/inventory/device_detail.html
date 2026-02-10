@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3">{{ device.name }}</h1>
-  <div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">{{ device.name }}</h1>
+  <div class="d-flex gap-2">
     <a class="btn btn-outline-primary" href="{% url 'device-edit' device.pk %}">Bearbeiten</a>
     <a class="btn btn-outline-danger" href="{% url 'device-delete' device.pk %}">Löschen</a>
   </div>
@@ -10,65 +10,89 @@
 
 <div class="row g-3">
   <div class="col-lg-6">
-    <div class="card"><div class="card-body">
-      <h2 class="h5">Gerätedetails</h2>
-      <dl class="row mb-0">
-        <dt class="col-sm-4">Kategorie</dt><dd class="col-sm-8">{{ device.category }}</dd>
-        <dt class="col-sm-4">Raum</dt><dd class="col-sm-8">{{ device.room|default:'-' }}</dd>
-        <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ device.get_activity_status_display }}</dd>
-        <dt class="col-sm-4">Zustand</dt><dd class="col-sm-8">{{ device.get_functional_status_display }}</dd>
-        <dt class="col-sm-4">Seriennummer</dt><dd class="col-sm-8">{{ device.serial_number }}</dd>
-        <dt class="col-sm-4">Kohorten-Nr.</dt><dd class="col-sm-8">{{ device.cohort_device_number|default:'-' }}</dd>
-        <dt class="col-sm-4">Hersteller</dt><dd class="col-sm-8">{{ device.manufacturer|default:'-' }}</dd>
-        <dt class="col-sm-4">CE</dt><dd class="col-sm-8">{{ device.ce_marking|default:'-' }}</dd>
-      </dl>
-    </div></div>
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Gerätedetails</h2>
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Kategorie</dt><dd class="col-sm-8">{{ device.category }}</dd>
+          <dt class="col-sm-4">Raum</dt><dd class="col-sm-8">{{ device.room|default:'-' }}</dd>
+          <dt class="col-sm-4">Status</dt><dd class="col-sm-8">{{ device.get_activity_status_display }}</dd>
+          <dt class="col-sm-4">Zustand</dt><dd class="col-sm-8">{{ device.get_functional_status_display }}</dd>
+          <dt class="col-sm-4">Seriennummer</dt><dd class="col-sm-8">{{ device.serial_number }}</dd>
+          <dt class="col-sm-4">Kohorten-Nr.</dt><dd class="col-sm-8">{{ device.cohort_device_number|default:'-' }}</dd>
+          <dt class="col-sm-4">Hersteller</dt><dd class="col-sm-8">{{ device.manufacturer|default:'-' }}</dd>
+          <dt class="col-sm-4">CE</dt><dd class="col-sm-8">{{ device.ce_marking|default:'-' }}</dd>
+        </dl>
+      </div>
+    </div>
   </div>
+
   <div class="col-lg-6">
-    <div class="card"><div class="card-body">
-      <h2 class="h5">Kategoriedokumente</h2>
-      <ul class="mb-0">
-        {% for doc in category_documents %}
-          <li><a href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.title }}</a></li>
-        {% empty %}
-          <li class="text-muted">Keine Dokumente hinterlegt.</li>
-        {% endfor %}
-      </ul>
-    </div></div>
+    <div class="card h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Kategoriedokumente</h2>
+        <ul class="list-group list-group-flush">
+          {% for doc in category_documents %}
+            <li class="list-group-item px-0"><a href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.title }}</a></li>
+          {% empty %}
+            <li class="list-group-item text-muted px-0">Keine Dokumente hinterlegt.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="card mt-3">
+<div class="card mt-3 shadow-sm">
+  <div class="card-header bg-transparent py-3">
+    <h2 class="h5 mb-0">Termine</h2>
+  </div>
   <div class="card-body">
-    <h2 class="h5">Termine</h2>
-    <form method="post" action="{% url 'appointment-create' device.pk %}" class="mb-3">
+    <form method="post" action="{% url 'appointment-create' device.pk %}" class="row g-3 align-items-end mb-4">
       {% csrf_token %}
-      {{ appointment_form.as_p }}
-      <button class="btn btn-primary" type="submit">Termin hinzufügen</button>
+      <div class="col-md-4">
+        <label class="form-label" for="{{ appointment_form.appointment_type.id_for_label }}">{{ appointment_form.appointment_type.label }}</label>
+        {{ appointment_form.appointment_type }}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label" for="{{ appointment_form.due_date.id_for_label }}">{{ appointment_form.due_date.label }}</label>
+        {{ appointment_form.due_date }}
+      </div>
+      <div class="col-12">
+        <label class="form-label" for="{{ appointment_form.note.id_for_label }}">{{ appointment_form.note.label }}</label>
+        {{ appointment_form.note }}
+      </div>
+      <div class="col-12 d-flex justify-content-end">
+        <button class="btn btn-primary px-4" type="submit">Termin hinzufügen</button>
+      </div>
     </form>
-    <ul class="list-group mb-0">
+
+    <div class="list-group">
       {% for appointment in appointments %}
-        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
-          <span>
-            {{ appointment.get_appointment_type_display }} – {{ appointment.due_date }}
-          </span>
+        <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3">
+          <div>
+            <div class="fw-semibold">{{ appointment.get_appointment_type_display }} – {{ appointment.due_date }}</div>
+            {% if appointment.note %}
+              <div class="text-muted small mt-1">{{ appointment.note }}</div>
+            {% endif %}
+          </div>
           <div class="d-flex align-items-center gap-2">
             <form method="post" action="{% url 'appointment-toggle-complete' device.pk appointment.pk %}" class="m-0">
               {% csrf_token %}
-              <label class="form-check m-0" title="Erledigt umschalten">
+              <div class="form-check m-0" title="Erledigt umschalten">
                 <input class="form-check-input" type="checkbox" onchange="this.form.submit()" {% if appointment.completed %}checked{% endif %}>
-              </label>
+              </div>
             </form>
             <form method="post" action="{% url 'appointment-delete' device.pk appointment.pk %}" class="m-0">
               {% csrf_token %}
               <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Termin löschen" title="Termin löschen">🗑️</button>
             </form>
           </div>
-        </li>
+        </div>
       {% empty %}
-        <li class="list-group-item text-muted">Keine Termine vorhanden.</li>
+        <div class="list-group-item text-muted">Keine Termine vorhanden.</div>
       {% endfor %}
-    </ul>
+    </div>
   </div>
 </div>
 {% endblock %}
