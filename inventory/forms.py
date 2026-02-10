@@ -54,7 +54,7 @@ class RoomForm(forms.ModelForm):
 class DeviceAppointmentForm(forms.ModelForm):
     class Meta:
         model = DeviceAppointment
-        fields = ["appointment_type", "due_date", "note", "completed"]
+        fields = ["appointment_type", "due_date", "note"]
         widgets = {
             "due_date": DateInput(),
             "note": forms.Textarea(attrs={"rows": 2}),
