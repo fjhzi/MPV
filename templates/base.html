@@ -18,8 +18,9 @@
       --mpv-muted: #5b6472;
       --row-overdue: #f8d7da;
       --row-warning: #fff3cd;
-      --toggle-track: #d6ddf0;
-      --toggle-knob: #ffffff;
+      --toggle-track: #d7deee;
+      --toggle-thumb: #ffffff;
+      --toggle-crater: #d2d9ea;
     }
 
     html[data-theme="dark"] {
@@ -34,8 +35,9 @@
       --mpv-muted: #afbdd6;
       --row-overdue: rgba(248, 88, 112, 0.25);
       --row-warning: rgba(255, 201, 87, 0.22);
-      --toggle-track: #3a4d70;
-      --toggle-knob: #f9f3c4;
+      --toggle-track: #2b3952;
+      --toggle-thumb: #f5f7ff;
+      --toggle-crater: #dbe4ff;
     }
 
     body {
@@ -66,9 +68,11 @@
     .theme-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
+      gap: 0.45rem;
       color: #fff;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
       user-select: none;
     }
 
@@ -78,44 +82,94 @@
 
     .theme-toggle .track {
       position: relative;
-      width: 56px;
-      height: 30px;
+      width: 68px;
+      height: 34px;
       border-radius: 999px;
       background: var(--toggle-track);
       transition: background-color 0.25s ease;
       box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
       cursor: pointer;
+      overflow: hidden;
+    }
+
+    .theme-toggle .track::before,
+    .theme-toggle .track::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
     }
 
     .theme-toggle .track::before {
-      content: "☀️";
-      position: absolute;
-      top: 4px;
-      left: 6px;
-      font-size: 14px;
-      opacity: 0.85;
+      opacity: 1;
+      background:
+        radial-gradient(circle at 18% 26%, rgba(255, 255, 255, 0.95) 0 1.5px, transparent 1.6px),
+        radial-gradient(circle at 30% 72%, rgba(255, 255, 255, 0.8) 0 1.5px, transparent 1.6px),
+        radial-gradient(circle at 78% 22%, rgba(255, 255, 255, 0.7) 0 1.2px, transparent 1.3px),
+        radial-gradient(circle at 88% 55%, rgba(255, 255, 255, 0.7) 0 1.3px, transparent 1.4px),
+        linear-gradient(135deg, #2f4262, #212e44);
+    }
+
+    .theme-toggle .track::after {
+      opacity: 0;
+      background:
+        radial-gradient(circle at 72% 25%, rgba(255, 255, 255, 0.45) 0 10px, transparent 10.5px),
+        linear-gradient(135deg, #8eb8ff, #6f90ff 50%, #5773e0 100%);
     }
 
     .theme-toggle .knob {
       position: absolute;
       top: 3px;
       left: 3px;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: var(--toggle-knob);
+      background: var(--toggle-thumb);
       transition: transform 0.28s cubic-bezier(.34, 1.56, .64, 1), background-color 0.25s ease;
       box-shadow: 0 4px 12px rgba(15, 23, 36, 0.35);
     }
 
+    .theme-toggle .knob::before,
+    .theme-toggle .knob::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      background: var(--toggle-crater);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .theme-toggle .knob::before {
+      width: 8px;
+      height: 8px;
+      top: 7px;
+      left: 6px;
+    }
+
+    .theme-toggle .knob::after {
+      width: 5px;
+      height: 5px;
+      top: 15px;
+      left: 15px;
+    }
+
     .theme-toggle input:checked + .track .knob {
-      transform: translateX(26px);
+      transform: translateX(34px);
     }
 
     .theme-toggle input:checked + .track::before {
-      content: "🌙";
-      left: auto;
-      right: 7px;
+      opacity: 0;
+    }
+
+    .theme-toggle input:checked + .track::after {
+      opacity: 1;
+    }
+
+    .theme-toggle input:checked + .track .knob::before,
+    .theme-toggle input:checked + .track .knob::after {
+      opacity: 1;
     }
 
     .card,
@@ -169,7 +223,7 @@
     </div>
 
     <label class="theme-toggle mb-0" for="theme-switch">
-      <span>Mode</span>
+      <span>Theme</span>
       <input type="checkbox" id="theme-switch" aria-label="Dark Mode umschalten">
       <span class="track"><span class="knob"></span></span>
     </label>
