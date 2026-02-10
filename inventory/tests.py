@@ -66,36 +66,58 @@ class StammdatenDeleteTests(TestCase):
         self.assertTrue(Category.objects.filter(id=self.category.id).exists())
 
 
-class ReminderViewTests(TestCase):
+class AppointmentActionsTests(TestCase):
     def setUp(self):
         self.client = Client()
-        category = Category.objects.create(name="Reminder-Cat")
-        room = Room.objects.create(name="Reminder-Room")
-        self.device = MedicalDevice.objects.create(
-            name="Reminder-Device",
-            category=category,
-            room=room,
-            serial_number="SN-REM-1",
+        self.category = Category.objects.create(name="Labor")
+        self.device = MedicalDevice.objects.create(name="Pump", category=self.category, serial_number="SN-2")
+
+    def test_create_appointment_defaults_to_incomplete(self):
+        response = self.client.post(
+            reverse("appointment-create", kwargs={"pk": self.device.id}),
+            {
+                "appointment_type": DeviceAppointment.AppointmentType.MAINTENANCE,
+                "due_date": "2030-01-01",
+                "note": "jährlich",
+            },
         )
 
-    def test_reminders_show_all_appointments_without_filter(self):
-        today = timezone.localdate()
-        overdue = DeviceAppointment.objects.create(medical_device=self.device, due_date=today - timedelta(days=2))
-        upcoming = DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=5))
-        later = DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=60))
+        self.assertEqual(response.status_code, 302)
+        appointment = DeviceAppointment.objects.get(medical_device=self.device)
+        self.assertFalse(appointment.completed)
 
-        response = self.client.get(reverse("reminders"), {"date_filter": "overdue"})
+    def test_toggle_complete_updates_appointment(self):
+        appointment = DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.CALIBRATION,
+            due_date="2030-01-01",
+            completed=False,
+        )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context["appointments"]), [overdue, upcoming, later])
-        self.assertNotContains(response, 'name="date_filter"')
+        response = self.client.post(
+            reverse(
+                "appointment-toggle-complete",
+                kwargs={"device_pk": self.device.id, "appointment_pk": appointment.id},
+            )
+        )
 
-    def test_reminders_highlight_overdue_and_due_within_30_days(self):
-        today = timezone.localdate()
-        overdue = DeviceAppointment.objects.create(medical_device=self.device, due_date=today - timedelta(days=1))
-        warning = DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=10))
+        self.assertEqual(response.status_code, 302)
+        appointment.refresh_from_db()
+        self.assertTrue(appointment.completed)
 
-        response = self.client.get(reverse("reminders"))
+    def test_delete_appointment_removes_it(self):
+        appointment = DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.CALIBRATION,
+            due_date="2030-01-01",
+        )
 
-        self.assertContains(response, f'<td class="reminder-due-overdue">{overdue.due_date}</td>', html=True)
-        self.assertContains(response, f'<td class="reminder-due-warning">{warning.due_date}</td>', html=True)
+        response = self.client.post(
+            reverse(
+                "appointment-delete",
+                kwargs={"device_pk": self.device.id, "appointment_pk": appointment.id},
+            )
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(DeviceAppointment.objects.filter(id=appointment.id).exists())
