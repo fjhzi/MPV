@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="h3 mb-3">Stammdaten</h1>
-<div class="row g-3">
-  <div class="col-lg-4">
+<div class="row g-3 align-items-start">
+  <div class="col-lg-6">
     <div class="card"><div class="card-body">
       <h2 class="h5">Kategorie erstellen</h2>
       <form method="post">
@@ -13,7 +13,7 @@
       </form>
     </div></div>
   </div>
-  <div class="col-lg-4">
+  <div class="col-lg-6">
     <div class="card"><div class="card-body">
       <h2 class="h5">Raum erstellen</h2>
       <form method="post">
@@ -24,14 +24,18 @@
       </form>
     </div></div>
   </div>
-  <div class="col-lg-4">
+  <div class="col-12">
     <div class="card"><div class="card-body">
       <h2 class="h5">Dokument hochladen</h2>
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
         <input type="hidden" name="action" value="upload_document">
-        {{ document_form.as_p }}
-        <button class="btn btn-primary" type="submit">Upload</button>
+        <div class="row g-3">
+          <div class="col-md-4">{{ document_form.category.label_tag }}{{ document_form.category }}</div>
+          <div class="col-md-4">{{ document_form.title.label_tag }}{{ document_form.title }}</div>
+          <div class="col-md-4">{{ document_form.file.label_tag }}{{ document_form.file }}</div>
+        </div>
+        <button class="btn btn-primary mt-3" type="submit">Upload</button>
       </form>
     </div></div>
   </div>
