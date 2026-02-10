@@ -46,11 +46,14 @@
       {{ appointment_form.as_p }}
       <button class="btn btn-primary" type="submit">Termin hinzufügen</button>
     </form>
-    <ul class="mb-0">
+    <ul class="list-group mb-0">
       {% for appointment in appointments %}
-        <li>{{ appointment.get_appointment_type_display }} – {{ appointment.due_date }} {% if appointment.completed %}(erledigt){% endif %}</li>
+        <li>
+          {{ appointment.get_appointment_type_display }} – {{ appointment.due_date }} {% if appointment.completed %}(erledigt){% endif %}
+          <a class="btn btn-sm btn-outline-danger ms-2" href="{% url 'appointment-delete' appointment.pk %}">Löschen</a>
+        </li>
       {% empty %}
-        <li class="text-muted">Keine Termine vorhanden.</li>
+        <li class="list-group-item text-muted">Keine Termine vorhanden.</li>
       {% endfor %}
     </ul>
   </div>

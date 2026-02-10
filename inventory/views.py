@@ -1,11 +1,11 @@
-from datetime import timedelta
-
 from django.core.exceptions import PermissionDenied
+
+from django.http import HttpResponseRedirect
 from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.utils import timezone
+from django.views import View
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
@@ -162,20 +162,33 @@ class AppointmentCreateView(CreateView):
         return reverse_lazy("device-detail", kwargs={"pk": self.kwargs["pk"]})
 
 
+class AppointmentDeleteView(DeleteView):
+    model = DeviceAppointment
+    template_name = "inventory/confirm_delete.html"
+
+    def get_success_url(self):
+        return reverse_lazy("device-detail", kwargs={"pk": self.object.medical_device_id})
+
+
 class ReminderView(ListView):
     model = DeviceAppointment
     template_name = "inventory/reminders.html"
     context_object_name = "appointments"
 
     def get_queryset(self):
-        queryset = DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
-        date_filter = self.request.GET.get("date_filter", "next_30")
-        today = timezone.localdate()
+        queryset = DeviceAppointment.objects.select_related(
+            "medical_device", "medical_device__category", "medical_device__room"
+        )
+        return queryset.filter(completed=False).order_by("due_date")
 
-        if date_filter == "overdue":
-            queryset = queryset.filter(due_date__lt=today, completed=False)
-        elif date_filter == "next_7":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=7), completed=False)
-        elif date_filter == "next_30":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30), completed=False)
-        return queryset.order_by("due_date")
+
+class ReminderArchiveView(ListView):
+    model = DeviceAppointment
+    template_name = "inventory/reminders_archive.html"
+    context_object_name = "appointments"
+
+    def get_queryset(self):
+        queryset = DeviceAppointment.objects.select_related(
+            "medical_device", "medical_device__category", "medical_device__room"
+        )
+        return queryset.filter(completed=True).order_by("-due_date")
