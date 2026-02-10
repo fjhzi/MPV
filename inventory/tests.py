@@ -117,3 +117,10 @@ class AppointmentActionsTests(TestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(DeviceAppointment.objects.filter(id=appointment.id).exists())
+
+
+class CompatibilityTests(TestCase):
+    def test_reminder_archive_view_compatibility_alias_exists(self):
+        from .views import ReminderArchiveView, ReminderView
+
+        self.assertTrue(issubclass(ReminderArchiveView, ReminderView))

@@ -189,6 +189,12 @@ class ReminderView(ListView):
         return queryset.order_by("due_date")
 
 
+class ReminderArchiveView(ReminderView):
+    """Backward-compatible alias for legacy URL imports."""
+
+    pass
+
+
 class AppointmentDeleteView(View):
     def post(self, request, device_pk, appointment_pk):
         appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
