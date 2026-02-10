@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h3 mb-3">Stammdaten</h1>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h2 class="h5">Kategorie erstellen</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_category">
+        {{ category_form.as_p }}
+        <button class="btn btn-primary" type="submit">Speichern</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h2 class="h5">Raum erstellen</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_room">
+        {{ room_form.as_p }}
+        <button class="btn btn-primary" type="submit">Speichern</button>
+      </form>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card"><div class="card-body">
+      <h2 class="h5">Dokument hochladen</h2>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="upload_document">
+        {{ document_form.as_p }}
+        <button class="btn btn-primary" type="submit">Upload</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-lg-6">
+    <div class="card"><div class="card-body">
+      <h2 class="h5">Kategorien</h2>
+      <ul>
+        {% for category in categories %}
+          <li>{{ category.name }} ({{ category.documents.count }} Dokumente)</li>
+        {% empty %}
+          <li class="text-muted">Keine Kategorien.</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card"><div class="card-body">
+      <h2 class="h5">Räume</h2>
+      <ul>
+        {% for room in rooms %}
+          <li>{{ room.name }}</li>
+        {% empty %}
+          <li class="text-muted">Keine Räume.</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}
