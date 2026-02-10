@@ -120,10 +120,10 @@ class AppointmentActionsTests(TestCase):
 
 
 class CompatibilityTests(TestCase):
-    def test_reminder_archive_view_compatibility_alias_exists(self):
-        from .views import ReminderArchiveView, ReminderView
+    def test_reminder_archive_view_exists(self):
+        from .views import ReminderArchiveView
 
-        self.assertTrue(issubclass(ReminderArchiveView, ReminderView))
+        self.assertIsNotNone(ReminderArchiveView)
 
 
 class ReminderViewTests(TestCase):
@@ -143,3 +143,44 @@ class ReminderViewTests(TestCase):
         response = self.client.get(reverse("reminders"))
 
         self.assertEqual(response.status_code, 200)
+
+
+    def test_reminders_default_shows_all_open_appointments(self):
+        DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.MAINTENANCE,
+            due_date="2030-01-01",
+            completed=False,
+        )
+        DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.CALIBRATION,
+            due_date="2035-01-01",
+            completed=False,
+        )
+
+        response = self.client.get(reverse("reminders"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["appointments"]), 2)
+
+    def test_archive_shows_only_completed_appointments(self):
+        DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.MAINTENANCE,
+            due_date="2030-01-01",
+            completed=False,
+        )
+        DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.CALIBRATION,
+            due_date="2030-02-01",
+            completed=True,
+        )
+
+        response = self.client.get(reverse("reminders-archive"))
+
+        self.assertEqual(response.status_code, 200)
+        appointments = response.context["appointments"]
+        self.assertEqual(len(appointments), 1)
+        self.assertTrue(appointments[0].completed)

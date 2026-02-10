@@ -179,22 +179,31 @@ class ReminderView(ListView):
 
     def get_queryset(self):
         queryset = DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
-        date_filter = self.request.GET.get("date_filter", "next_30")
+        date_filter = self.request.GET.get("date_filter", "all_open")
         today = timezone.localdate()
 
+        queryset = queryset.filter(completed=False)
+
         if date_filter == "overdue":
-            queryset = queryset.filter(due_date__lt=today, completed=False)
+            queryset = queryset.filter(due_date__lt=today)
         elif date_filter == "next_7":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=7), completed=False)
+            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=7))
         elif date_filter == "next_30":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=30), completed=False)
+            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=30))
         return queryset.order_by("due_date")
 
 
-class ReminderArchiveView(ReminderView):
-    """Backward-compatible alias for legacy URL imports."""
+class ReminderArchiveView(ListView):
+    model = DeviceAppointment
+    template_name = "inventory/reminders_archive.html"
+    context_object_name = "appointments"
 
-    pass
+    def get_queryset(self):
+        return (
+            DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
+            .filter(completed=True)
+            .order_by("-due_date")
+        )
 
 
 class AppointmentDeleteView(View):
