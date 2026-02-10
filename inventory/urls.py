@@ -10,6 +10,7 @@ from .views import (
     MedicalDeviceDeleteView,
     MedicalDeviceDetailView,
     MedicalDeviceUpdateView,
+    ReminderArchiveView,
     ReminderView,
 )
 
@@ -24,4 +25,5 @@ urlpatterns = [
     path("devices/<int:device_pk>/appointments/<int:appointment_pk>/toggle-complete/", AppointmentToggleCompleteView.as_view(), name="appointment-toggle-complete"),
     path("stammdaten/", CategoryListCreateView.as_view(), name="stammdaten"),
     path("reminders/", ReminderView.as_view(), name="reminders"),
+    path("reminders/archive/", ReminderArchiveView.as_view(), name="reminders-archive"),
 ]
