@@ -66,56 +66,88 @@
     .theme-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
-      color: #fff;
-      font-size: 0.9rem;
       user-select: none;
     }
 
     .theme-toggle input {
-      display: none;
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
     }
 
     .theme-toggle .track {
       position: relative;
-      width: 56px;
-      height: 30px;
+      width: 64px;
+      height: 32px;
       border-radius: 999px;
-      background: var(--toggle-track);
-      transition: background-color 0.25s ease;
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+      background: linear-gradient(135deg, #7cb9ff 0%, #4f8df3 100%);
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.18);
       cursor: pointer;
+      transition: background 0.25s ease, border-color 0.25s ease;
+      overflow: hidden;
+      display: block;
     }
 
-    .theme-toggle .track::before {
-      content: "☀️";
+    .theme-toggle .thumb {
       position: absolute;
-      top: 4px;
-      left: 6px;
-      font-size: 14px;
-      opacity: 0.85;
-    }
-
-    .theme-toggle .knob {
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 24px;
-      height: 24px;
+      top: 2px;
+      left: 2px;
+      width: 28px;
+      height: 28px;
       border-radius: 50%;
-      background: var(--toggle-knob);
-      transition: transform 0.28s cubic-bezier(.34, 1.56, .64, 1), background-color 0.25s ease;
-      box-shadow: 0 4px 12px rgba(15, 23, 36, 0.35);
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(17, 24, 39, 0.28);
+      transition: transform 0.28s cubic-bezier(.4, 0, .2, 1), background-color 0.25s ease;
+      z-index: 2;
     }
 
-    .theme-toggle input:checked + .track .knob {
-      transform: translateX(26px);
+    .theme-toggle .icon {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 12px;
+      line-height: 1;
+      transition: opacity 0.25s ease;
+      z-index: 1;
     }
 
-    .theme-toggle input:checked + .track::before {
-      content: "🌙";
-      left: auto;
-      right: 7px;
+    .theme-toggle .icon-sun {
+      right: 9px;
+      opacity: 1;
+      color: #ffe082;
+      text-shadow: 0 0 8px rgba(255, 224, 130, 0.8);
+    }
+
+    .theme-toggle .icon-moon {
+      left: 9px;
+      opacity: 0;
+      color: #dbe7ff;
+      text-shadow: 0 0 8px rgba(219, 231, 255, 0.5);
+    }
+
+    .theme-toggle input:checked + .track {
+      background: linear-gradient(135deg, #1b2538 0%, #0f1727 100%);
+      border-color: rgba(170, 188, 220, 0.35);
+    }
+
+    .theme-toggle input:checked + .track .thumb {
+      transform: translateX(32px);
+      background: #e8eeff;
+    }
+
+    .theme-toggle input:checked + .track .icon-sun {
+      opacity: 0;
+    }
+
+    .theme-toggle input:checked + .track .icon-moon {
+      opacity: 1;
+    }
+
+    .theme-toggle input:focus-visible + .track {
+      outline: 2px solid rgba(255, 255, 255, 0.9);
+      outline-offset: 3px;
     }
 
     .card,
@@ -177,9 +209,12 @@
     </div>
 
     <label class="theme-toggle mb-0" for="theme-switch">
-      <span>Mode</span>
       <input type="checkbox" id="theme-switch" aria-label="Dark Mode umschalten">
-      <span class="track"><span class="knob"></span></span>
+      <span class="track">
+        <span class="icon icon-moon" aria-hidden="true">☾</span>
+        <span class="icon icon-sun" aria-hidden="true">☀</span>
+        <span class="thumb"></span>
+      </span>
     </label>
   </div>
 </nav>
