@@ -42,12 +42,42 @@ class DashboardView(ListView):
         functional_status = self.request.GET.get("functional_status", "").strip()
 
         if search:
-            queryset = queryset.filter(
+            normalized_search = search.casefold()
+            activity_status_aliases = {
+                "aktiv": "active",
+                "active": "active",
+                "nicht aktiv": "inactive",
+                "inaktiv": "inactive",
+                "inactive": "inactive",
+            }
+            functional_status_aliases = {
+                "funktionsfähig": "functional",
+                "funktionsfaehig": "functional",
+                "functional": "functional",
+                "defekt": "defective",
+                "defective": "defective",
+            }
+
+            search_query = (
                 Q(name__icontains=search)
                 | Q(serial_number__icontains=search)
                 | Q(cohort_device_number__icontains=search)
                 | Q(manufacturer__icontains=search)
+                | Q(category__name__icontains=search)
+                | Q(room__name__icontains=search)
+                | Q(activity_status__icontains=search)
+                | Q(functional_status__icontains=search)
             )
+
+            mapped_activity_status = activity_status_aliases.get(normalized_search)
+            if mapped_activity_status:
+                search_query |= Q(activity_status=mapped_activity_status)
+
+            mapped_functional_status = functional_status_aliases.get(normalized_search)
+            if mapped_functional_status:
+                search_query |= Q(functional_status=mapped_functional_status)
+
+            queryset = queryset.filter(search_query)
         if category:
             queryset = queryset.filter(category_id=category)
         if room:

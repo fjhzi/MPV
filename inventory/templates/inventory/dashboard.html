@@ -6,8 +6,11 @@
 </div>
 <form method="get" id="dashboard-filter-form" class="card card-body mb-3">
   <div class="d-flex gap-2 align-items-stretch">
-    <div class="flex-grow-1">
-      <input class="form-control h-100" type="text" name="q" placeholder="Suche..." value="{{ request.GET.q }}" autocomplete="off">
+    <div class="input-group flex-grow-1">
+      <input class="form-control" type="text" name="q" placeholder="Suche in allen Spalten..." value="{{ request.GET.q }}" autocomplete="off">
+      <button class="btn btn-outline-primary" type="submit" aria-label="Suchen">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      </button>
     </div>
     <button
       class="btn btn-outline-primary px-3"
@@ -107,18 +110,6 @@
     const form = document.getElementById('dashboard-filter-form');
     if (!form) {
       return;
-    }
-
-    const searchInput = form.querySelector('input[name="q"]');
-    let searchDebounce;
-
-    if (searchInput) {
-      searchInput.addEventListener('input', function () {
-        window.clearTimeout(searchDebounce);
-        searchDebounce = window.setTimeout(function () {
-          form.submit();
-        }, 350);
-      });
     }
 
     const selects = form.querySelectorAll('.js-auto-submit-filter');
