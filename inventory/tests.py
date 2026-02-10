@@ -78,17 +78,17 @@ class ReminderViewTests(TestCase):
             serial_number="SN-REM-1",
         )
 
-    def test_reminders_show_all_appointments_without_filter(self):
+    def test_reminders_show_only_open_appointments(self):
         today = timezone.localdate()
-        overdue = DeviceAppointment.objects.create(medical_device=self.device, due_date=today - timedelta(days=2))
-        upcoming = DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=5))
-        later = DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=60))
+        overdue = DeviceAppointment.objects.create(medical_device=self.device, due_date=today - timedelta(days=2), completed=False)
+        upcoming = DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=5), completed=False)
+        DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=2), completed=True)
 
-        response = self.client.get(reverse("reminders"), {"date_filter": "overdue"})
+        response = self.client.get(reverse("reminders"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(list(response.context["appointments"]), [overdue, upcoming, later])
-        self.assertNotContains(response, 'name="date_filter"')
+        self.assertEqual(list(response.context["appointments"]), [overdue, upcoming])
+        self.assertContains(response, "Erledigte Termine (Archiv)")
 
     def test_reminders_highlight_overdue_and_due_within_30_days(self):
         today = timezone.localdate()
@@ -99,3 +99,28 @@ class ReminderViewTests(TestCase):
 
         self.assertContains(response, f'<td class="reminder-due-overdue">{overdue.due_date}</td>', html=True)
         self.assertContains(response, f'<td class="reminder-due-warning">{warning.due_date}</td>', html=True)
+
+
+class ReminderArchiveViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        category = Category.objects.create(name="Archive-Cat")
+        room = Room.objects.create(name="Archive-Room")
+        self.device = MedicalDevice.objects.create(
+            name="Archive-Device",
+            category=category,
+            room=room,
+            serial_number="SN-ARC-1",
+        )
+
+    def test_archive_shows_only_completed_appointments(self):
+        today = timezone.localdate()
+        old_done = DeviceAppointment.objects.create(medical_device=self.device, due_date=today - timedelta(days=30), completed=True)
+        new_done = DeviceAppointment.objects.create(medical_device=self.device, due_date=today - timedelta(days=1), completed=True)
+        DeviceAppointment.objects.create(medical_device=self.device, due_date=today + timedelta(days=3), completed=False)
+
+        response = self.client.get(reverse("reminders-archive"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["appointments"]), [new_done, old_done])
+        self.assertContains(response, "Zurück zu offenen Terminen")
