@@ -124,3 +124,22 @@ class CompatibilityTests(TestCase):
         from .views import ReminderArchiveView, ReminderView
 
         self.assertTrue(issubclass(ReminderArchiveView, ReminderView))
+
+
+class ReminderViewTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        category = Category.objects.create(name="Radiologie")
+        self.device = MedicalDevice.objects.create(name="CT", category=category, serial_number="SN-3")
+
+    def test_reminders_page_loads_with_default_filter(self):
+        DeviceAppointment.objects.create(
+            medical_device=self.device,
+            appointment_type=DeviceAppointment.AppointmentType.MAINTENANCE,
+            due_date="2030-01-01",
+            completed=False,
+        )
+
+        response = self.client.get(reverse("reminders"))
+
+        self.assertEqual(response.status_code, 200)
