@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-  <h1 class="h3 mb-0">Reminder</h1>
-  <a class="btn btn-outline-primary" href="{% url 'reminders-archive' %}">Erledigte Termine (Archiv)</a>
+  <h1 class="h3 mb-0">Reminder Archiv</h1>
+  <a class="btn btn-outline-primary" href="{% url 'reminders' %}">Zurück zu offenen Terminen</a>
 </div>
 
 <div class="table-responsive bg-white border rounded">
@@ -13,12 +13,12 @@
       <tr>
         <td><a href="{% url 'device-detail' appointment.medical_device_id %}">{{ appointment.medical_device.name }}</a></td>
         <td>{{ appointment.get_appointment_type_display }}</td>
-        <td class="{% if appointment.days_until_due < 0 %}reminder-due-overdue{% elif appointment.days_until_due <= 30 %}reminder-due-warning{% endif %}">{{ appointment.due_date }}</td>
+        <td>{{ appointment.due_date }}</td>
         <td>{% if appointment.days_until_due < 0 %}{{ appointment.days_until_due }} (überfällig){% else %}{{ appointment.days_until_due }}{% endif %}</td>
-        <td>Offen</td>
+        <td>Erledigt</td>
       </tr>
     {% empty %}
-      <tr><td colspan="5" class="text-muted text-center py-4">Keine offenen Termine vorhanden.</td></tr>
+      <tr><td colspan="5" class="text-muted text-center py-4">Keine erledigten Termine vorhanden.</td></tr>
     {% endfor %}
   </tbody>
 </table>
