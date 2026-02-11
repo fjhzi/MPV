@@ -9,16 +9,27 @@
     <div class="card shadow-sm">
       <div class="card-header bg-transparent py-3"><h2 class="h5 mb-0">Kategorie erstellen</h2></div>
       <div class="card-body">
-        <form method="post" class="row g-3">
+        <form method="post" class="row g-3" id="category-create-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="create_category">
-          {% for field in category_form %}
-            <div class="col-12">
-              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              {{ field }}
-              {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          <div class="col-12">
+            <label class="form-label" for="{{ category_form.name.id_for_label }}">{{ category_form.name.label }}</label>
+            {{ category_form.name }}
+            {% for error in category_form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
+          <div class="col-12" id="category-optional-fields-wrapper" hidden>
+            <div class="row g-2">
+              {% for field in category_form %}
+                {% if field.name != "name" %}
+                  <div class="col-12 col-md-6">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                  </div>
+                {% endif %}
+              {% endfor %}
             </div>
-          {% endfor %}
+          </div>
           <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
         </form>
       </div>
@@ -57,7 +68,7 @@
                 <div class="fw-semibold">{{ category.name }}</div>
                 {% if not categories_schema_unavailable %}
                 <div class="small text-muted">
-                  DGUV 3: {{ category.dguv3_interval_months|default:'-' }} Monate ·
+                  DGUV3: {{ category.dguv3_interval_months|default:'-' }} Monate ·
                   MTK: {{ category.mtk_interval_months|default:'-' }} Monate ·
                   STK: {{ category.stk_interval_months|default:'-' }} Monate ·
                   Kalibrierung: {{ category.calibration_interval_months|default:'-' }} Monate
@@ -88,19 +99,19 @@
                 {% endif %}
               </div>
             </div>
-            {% if not categories_schema_unavailable %}<div class="collapse mt-3" id="edit-category-{{ category.id }}">
-              <form method="post" class="row g-2 p-3 bg-light rounded border">
+            {% if not categories_schema_unavailable %}<div class="collapse mt-2" id="edit-category-{{ category.id }}">
+              <form method="post" class="row g-1 p-2 bg-light rounded border category-edit-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_category">
                 <input type="hidden" name="category_id" value="{{ category.id }}">
                 {% for field in edit_form %}
                   <div class="col-12 col-md-6">
-                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    <label class="form-label small mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
                     {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
                   </div>
                 {% endfor %}
-                <div class="col-12 d-flex justify-content-end">
+                <div class="col-12 d-flex justify-content-end mt-1">
                   <button class="btn btn-sm btn-primary" type="submit">Änderungen speichern</button>
                 </div>
               </form>
@@ -135,4 +146,47 @@
     </div></div>
   </div>
 </div>
+
+<style>
+  .category-edit-form input,
+  .category-edit-form select,
+  .category-edit-form textarea {
+    min-height: calc(1.5em + 0.35rem + 2px);
+    padding: 0.15rem 0.4rem;
+    font-size: 0.875rem;
+  }
+</style>
+
+<script>
+  (function () {
+    const form = document.getElementById("category-create-form");
+    if (!form) {
+      return;
+    }
+
+    const nameField = form.querySelector('input[name="name"]');
+    const wrapper = document.getElementById("category-optional-fields-wrapper");
+
+    if (!nameField || !wrapper) {
+      return;
+    }
+
+    const showOptionalFields = function () {
+      wrapper.hidden = false;
+    };
+
+    const hideOptionalFields = function () {
+      if (!nameField.value.trim()) {
+        wrapper.hidden = true;
+      }
+    };
+
+    if (nameField.value.trim()) {
+      showOptionalFields();
+    }
+
+    nameField.addEventListener("focus", showOptionalFields);
+    nameField.addEventListener("blur", hideOptionalFields);
+  })();
+</script>
 {% endblock %}

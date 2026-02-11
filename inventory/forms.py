@@ -62,6 +62,12 @@ class CategoryForm(BootstrapStyledModelForm):
             "stk_interval_months",
             "calibration_interval_months",
         ]
+        labels = {
+            "dguv3_interval_months": "DGUV3 interval months (optional)",
+            "mtk_interval_months": "MTK interval months (optional)",
+            "stk_interval_months": "STK interval months (optional)",
+            "calibration_interval_months": "Calibration interval months (optional)",
+        }
 
 
 class RoomForm(forms.ModelForm):
