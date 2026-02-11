@@ -128,6 +128,21 @@ class DashboardView(ListView):
         context["sort"] = self.request.GET.get("sort", "name")
         context["direction"] = self.request.GET.get("direction", "asc")
         context["next_direction"] = "desc" if context["direction"] == "asc" else "asc"
+
+        base_query_params = self.request.GET.copy()
+        base_query_params.pop("page", None)
+        context["querystring_without_page"] = base_query_params.urlencode()
+
+        sort_links = {}
+        for sort_key in self.allowed_sort_fields:
+            sort_query_params = base_query_params.copy()
+            next_direction = "asc"
+            if context["sort"] == sort_key and context["direction"] == "asc":
+                next_direction = "desc"
+            sort_query_params["sort"] = sort_key
+            sort_query_params["direction"] = next_direction
+            sort_links[sort_key] = sort_query_params.urlencode()
+        context["sort_links"] = sort_links
         return context
 
 
