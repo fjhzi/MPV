@@ -33,3 +33,14 @@ Für die Vorbereitung eines offenen, selbst gehosteten Betriebsmodells siehe:
 - `docs/LICENSING_GUIDE.md`
 - `SECURITY.md`
 - `CONTRIBUTING.md`
+
+
+## Deployment ohne runserver (für Studienzentren)
+Empfohlen ist Docker Compose statt `python manage.py runserver`:
+
+```bash
+cp .env.example .env
+docker compose -f deploy/docker-compose.yml up -d --build
+```
+
+Details: `docs/DEPLOYMENT.md`
