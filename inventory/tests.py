@@ -270,6 +270,7 @@ class StammdatenPageTests(TestCase):
     def setUp(self):
         self.client = Client()
         Category.objects.create(name="Testkategorie")
+        Category.objects.create(name="Zentrifuge", dguv3_interval_months=12, mtk_interval_months=24)
 
     def test_stammdaten_has_no_document_upload_section(self):
         response = self.client.get(reverse("stammdaten"))
@@ -293,63 +294,22 @@ class StammdatenPageTests(TestCase):
         self.assertContains(response, 'id="category-create-form"')
         self.assertContains(response, 'nameField.addEventListener("focus", showOptionalFields)')
 
-
-class CategoryAttributesTests(TestCase):
-    def setUp(self):
-        self.client = Client()
-
-    def test_create_category_with_optional_intervals(self):
-        response = self.client.post(
-            reverse("stammdaten"),
-            {
-                "action": "create_category",
-                "name": "Anästhesie",
-                "dguv3_interval_months": 12,
-                "mtk_interval_months": 24,
-                "stk_interval_months": 36,
-                "calibration_interval_months": 18,
-            },
-        )
+    def test_stammdaten_hides_empty_optional_summary(self):
+        response = self.client.get(reverse("stammdaten"))
 
         self.assertEqual(response.status_code, 200)
-        category = Category.objects.get(name="Anästhesie")
-        self.assertEqual(category.dguv3_interval_months, 12)
-        self.assertEqual(category.mtk_interval_months, 24)
-        self.assertEqual(category.stk_interval_months, 36)
-        self.assertEqual(category.calibration_interval_months, 18)
+        self.assertNotContains(response, "DGUV3: - Monate")
+        self.assertNotContains(response, "MTK: - Monate")
+        self.assertNotContains(response, "STK: - Monate")
+        self.assertNotContains(response, "Kalibrierung: - Monate")
 
-    def test_update_category_intervals(self):
-        category = Category.objects.create(name="Intensiv")
+    def test_stammdaten_shows_only_filled_optional_summary_values(self):
+        response = self.client.get(reverse("stammdaten"))
 
-        response = self.client.post(
-            reverse("stammdaten"),
-            {
-                "action": "update_category",
-                "category_id": category.id,
-                f"category_{category.id}-name": "Intensivstation",
-                f"category_{category.id}-dguv3_interval_months": 6,
-                f"category_{category.id}-mtk_interval_months": 12,
-                f"category_{category.id}-stk_interval_months": "",
-                f"category_{category.id}-calibration_interval_months": 9,
-            },
-        )
-
-        self.assertEqual(response.status_code, 200)
-        category.refresh_from_db()
-        self.assertEqual(category.name, "Intensivstation")
-        self.assertEqual(category.dguv3_interval_months, 6)
-        self.assertEqual(category.mtk_interval_months, 12)
-        self.assertIsNone(category.stk_interval_months)
-        self.assertEqual(category.calibration_interval_months, 9)
-
-
-class MedicalDeviceFormFieldsTests(TestCase):
-    def test_medical_device_form_has_delivery_date_but_no_ce_marking(self):
-        response = self.client.get(reverse("device-create"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="delivery_date"')
-        self.assertNotContains(response, 'name="ce_marking"')
+        self.assertContains(response, "DGUV3: 12 Monate")
+        self.assertContains(response, "MTK: 24 Monate")
+        self.assertNotContains(response, "STK: 24 Monate")
+        self.assertNotContains(response, "Kalibrierung: 24 Monate")
 
 
 class CategoryAttributesTests(TestCase):
