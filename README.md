@@ -26,3 +26,10 @@ python manage.py runserver
 Dann öffnen:
 - App: http://127.0.0.1:8000/
 - Admin: http://127.0.0.1:8000/admin/
+
+## Open-Source-Betrieb für Studienzentren
+Für die Vorbereitung eines offenen, selbst gehosteten Betriebsmodells siehe:
+- `docs/OPEN_SOURCE_CHECKLIST.md`
+- `docs/LICENSING_GUIDE.md`
+- `SECURITY.md`
+- `CONTRIBUTING.md`
