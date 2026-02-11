@@ -3,7 +3,7 @@ from django.test import Client, TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
-from .models import Category, DeviceAppointment, MedicalDevice, Room
+from .models import Category, DeviceAppointment, DeviceEvent, MedicalDevice, Room
 
 
 class DashboardViewTests(TestCase):
@@ -235,3 +235,47 @@ class StammdatenPageTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Dokument hochladen")
+
+
+class EventActionsTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.category = Category.objects.create(name="Kardiologie")
+        self.device = MedicalDevice.objects.create(name="EKG-Gerät", category=self.category, serial_number="SN-4")
+
+    def test_create_event(self):
+        response = self.client.post(
+            reverse("event-create", kwargs={"pk": self.device.id}),
+            {
+                "event_date": "2030-01-10",
+                "note": "Gerät umgezogen",
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        event = DeviceEvent.objects.get(medical_device=self.device)
+        self.assertEqual(str(event.event_date), "2030-01-10")
+
+    def test_delete_event(self):
+        event = DeviceEvent.objects.create(
+            medical_device=self.device,
+            event_date="2030-01-10",
+            note="Alt",
+        )
+
+        response = self.client.post(
+            reverse("event-delete", kwargs={"device_pk": self.device.id, "event_pk": event.id})
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(DeviceEvent.objects.filter(id=event.id).exists())
+
+    def test_events_sorted_from_newest_to_oldest(self):
+        newer = DeviceEvent.objects.create(medical_device=self.device, event_date="2030-02-01", note="Neu")
+        older = DeviceEvent.objects.create(medical_device=self.device, event_date="2030-01-01", note="Alt")
+
+        response = self.client.get(reverse("device-detail", kwargs={"pk": self.device.id}))
+
+        self.assertEqual(response.status_code, 200)
+        events = list(response.context["events"])
+        self.assertEqual(events, [newer, older])
