@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import Client, TestCase
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -375,6 +377,22 @@ class EventActionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         events = list(response.context["events"])
         self.assertEqual(events, [newer, older])
+
+
+class CategorySchemaFallbackTests(TestCase):
+    @patch("inventory.views.Category.objects.only")
+    @patch("inventory.views.Category.objects.all", side_effect=Exception("force"))
+    def test_dashboard_handles_category_schema_mismatch(self, _all_mock, only_mock):
+        from django.db import DatabaseError
+
+        _all_mock.side_effect = DatabaseError("missing column")
+        only_mock.return_value = Category.objects.none()
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["categories_schema_unavailable"])
+
 
 
 class DeviceDetailViewResilienceTests(TestCase):

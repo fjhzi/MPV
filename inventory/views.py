@@ -15,6 +15,29 @@ from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, De
 from .models import Category, CategoryDocument, DeviceAppointment, DeviceEvent, MedicalDevice, Room
 
 
+def _safe_category_context(*, include_edit_forms=False):
+    """Return category context even when optional category columns are not migrated yet."""
+    context = {"categories_schema_unavailable": False}
+    try:
+        categories = list(Category.objects.all())
+    except DatabaseError:
+        context["categories_schema_unavailable"] = True
+        categories = list(Category.objects.only("id", "name"))
+
+    context["categories"] = categories
+    if include_edit_forms:
+        if context["categories_schema_unavailable"]:
+            context["category_edit_forms"] = [(category, None) for category in categories]
+        else:
+            context["category_edit_forms"] = [
+                (category, CategoryForm(instance=category, prefix=f"category_{category.pk}"))
+                for category in categories
+            ]
+    else:
+        context["category_edit_forms"] = []
+    return context
+
+
 class DashboardView(ListView):
     model = MedicalDevice
     template_name = "inventory/dashboard.html"
@@ -98,7 +121,9 @@ class DashboardView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["categories"] = Category.objects.all()
+        category_context = _safe_category_context()
+        context["categories"] = category_context["categories"]
+        context["categories_schema_unavailable"] = category_context["categories_schema_unavailable"]
         context["rooms"] = Room.objects.all()
         context["sort"] = self.request.GET.get("sort", "name")
         context["direction"] = self.request.GET.get("direction", "asc")
@@ -165,12 +190,10 @@ class CategoryListCreateView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["category_form"] = CategoryForm()
         context["room_form"] = RoomForm()
-        categories = Category.objects.all()
-        context["categories"] = categories
-        context["category_edit_forms"] = [
-            (category, CategoryForm(instance=category, prefix=f"category_{category.pk}"))
-            for category in categories
-        ]
+        category_context = _safe_category_context(include_edit_forms=True)
+        context["categories"] = category_context["categories"]
+        context["category_edit_forms"] = category_context["category_edit_forms"]
+        context["categories_schema_unavailable"] = category_context["categories_schema_unavailable"]
         context["rooms"] = Room.objects.all()
         return context
 
@@ -185,10 +208,13 @@ class CategoryListCreateView(TemplateView):
             if form.is_valid():
                 form.save()
         elif action == "update_category":
-            category = get_object_or_404(Category, pk=request.POST.get("category_id"))
-            form = CategoryForm(request.POST, instance=category, prefix=f"category_{category.pk}")
-            if form.is_valid():
-                form.save()
+            try:
+                category = get_object_or_404(Category, pk=request.POST.get("category_id"))
+                form = CategoryForm(request.POST, instance=category, prefix=f"category_{category.pk}")
+                if form.is_valid():
+                    form.save()
+            except DatabaseError:
+                pass
         elif action == "delete_category":
             if not request.user.is_staff:
                 raise PermissionDenied
@@ -211,7 +237,12 @@ class DocumentManagementView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["document_form"] = CategoryDocumentForm()
-        context["categories"] = Category.objects.prefetch_related("documents")
+        try:
+            context["categories"] = Category.objects.only("id", "name").prefetch_related("documents")
+            context["categories_schema_unavailable"] = False
+        except DatabaseError:
+            context["categories"] = []
+            context["categories_schema_unavailable"] = True
         return context
 
     def post(self, request, *args, **kwargs):
