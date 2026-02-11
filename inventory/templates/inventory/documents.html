@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h1 class="h3 mb-3">Dokumente</h1>
+<div class="row g-3 align-items-start">
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-header bg-transparent py-3"><h2 class="h5 mb-0">Dokument hochladen</h2></div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="upload_document">
+          <div class="col-md-4">
+            <label class="form-label" for="{{ document_form.category.id_for_label }}">{{ document_form.category.label }}</label>
+            {{ document_form.category }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="{{ document_form.title.id_for_label }}">{{ document_form.title.label }}</label>
+            {{ document_form.title }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
+            {{ document_form.file }}
+          </div>
+          <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit">Upload</button></div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-12">
+    <div class="card shadow-sm"><div class="card-body">
+      <h2 class="h5">Kategorien mit Dokumenten</h2>
+      <ul class="list-group list-group-flush">
+        {% for category in categories %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span>{{ category.name }} ({{ category.documents.count }} Dokumente)</span>
+          </li>
+        {% empty %}
+          <li class="text-muted list-group-item px-0">Keine Kategorien.</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

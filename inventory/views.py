@@ -147,8 +147,7 @@ class CategoryListCreateView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["category_form"] = CategoryForm()
         context["room_form"] = RoomForm()
-        context["document_form"] = CategoryDocumentForm()
-        context["categories"] = Category.objects.prefetch_related("documents")
+        context["categories"] = Category.objects.all()
         context["rooms"] = Room.objects.all()
         return context
 
@@ -175,7 +174,20 @@ class CategoryListCreateView(TemplateView):
                 raise PermissionDenied
             room = get_object_or_404(Room, pk=request.POST.get("room_id"))
             room.delete()
-        elif action == "upload_document":
+        return self.get(request, *args, **kwargs)
+
+
+class DocumentManagementView(TemplateView):
+    template_name = "inventory/documents.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["document_form"] = CategoryDocumentForm()
+        context["categories"] = Category.objects.prefetch_related("documents")
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.POST.get("action") == "upload_document":
             form = CategoryDocumentForm(request.POST, request.FILES)
             if form.is_valid():
                 form.save()

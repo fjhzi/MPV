@@ -1,4 +1,6 @@
 from django.test import Client, TestCase
+
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from .models import Category, DeviceAppointment, MedicalDevice, Room
@@ -194,3 +196,42 @@ class ReminderViewTests(TestCase):
         appointments = response.context["appointments"]
         self.assertEqual(len(appointments), 1)
         self.assertTrue(appointments[0].completed)
+
+
+class DocumentManagementTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.category = Category.objects.create(name="EKG")
+
+    def test_documents_page_loads(self):
+        response = self.client.get(reverse("documents"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dokument hochladen")
+
+    def test_upload_document_from_documents_page(self):
+        file = SimpleUploadedFile("manual.txt", b"test content", content_type="text/plain")
+
+        response = self.client.post(
+            reverse("documents"),
+            {
+                "action": "upload_document",
+                "category": self.category.id,
+                "title": "Anleitung",
+                "file": file,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.category.documents.count(), 1)
+
+
+class StammdatenPageTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_stammdaten_has_no_document_upload_section(self):
+        response = self.client.get(reverse("stammdaten"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Dokument hochladen")
