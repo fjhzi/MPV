@@ -4,6 +4,9 @@
   <h1 class="h3 mb-0">Medizinprodukte</h1>
   <a href="{% url 'device-create' %}" class="btn btn-primary">Neu anlegen</a>
 </div>
+{% if categories_schema_unavailable %}
+<div class="alert alert-warning" role="alert">Kategorien konnten nicht vollständig geladen werden. Bitte Migrationen ausführen (<code>python manage.py migrate</code>).</div>
+{% endif %}
 <form method="get" id="dashboard-filter-form" class="card card-body mb-3">
   <div class="d-flex gap-2 align-items-stretch">
     <div class="input-group flex-grow-1">
