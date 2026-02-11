@@ -62,7 +62,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_document">
                         <input type="hidden" name="document_id" value="{{ doc.id }}">
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
+                        <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
                       </form>
                     </li>
                   {% empty %}
