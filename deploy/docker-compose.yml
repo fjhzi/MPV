@@ -1,0 +1,19 @@
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    volumes:
+      - mpv_data:/app/data
+      - mpv_media:/app/media
+      - mpv_static:/app/staticfiles
+    ports:
+      - "8000:8000"
+
+volumes:
+  mpv_data:
+  mpv_media:
+  mpv_static:

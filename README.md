@@ -26,3 +26,21 @@ python manage.py runserver
 Dann öffnen:
 - App: http://127.0.0.1:8000/
 - Admin: http://127.0.0.1:8000/admin/
+
+## Open-Source-Betrieb für Studienzentren
+Für die Vorbereitung eines offenen, selbst gehosteten Betriebsmodells siehe:
+- `docs/OPEN_SOURCE_CHECKLIST.md`
+- `docs/LICENSING_GUIDE.md`
+- `SECURITY.md`
+- `CONTRIBUTING.md`
+
+
+## Deployment ohne runserver (für Studienzentren)
+Empfohlen ist Docker Compose statt `python manage.py runserver`:
+
+```bash
+cp .env.example .env
+docker compose -f deploy/docker-compose.yml up -d --build
+```
+
+Details: `docs/DEPLOYMENT.md`
