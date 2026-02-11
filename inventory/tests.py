@@ -12,7 +12,7 @@ from .views import MedicalDeviceDetailView
 class DashboardViewTests(TestCase):
     def setUp(self):
         self.client = Client()
-        category = Category.objects.create(name="EKG")
+        category = Category.objects.create(name="EKG-Test")
         room = Room.objects.create(name="A-101")
         MedicalDevice.objects.create(name="Monitor", category=category, room=room, serial_number="SN-1")
 
@@ -27,7 +27,7 @@ class DashboardViewTests(TestCase):
         self.assertContains(response, "Monitor")
 
     def test_search_finds_by_category_name(self):
-        response = self.client.get(reverse("dashboard"), {"q": "EKG"})
+        response = self.client.get(reverse("dashboard"), {"q": "EKG-Test"})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Monitor")
 
@@ -204,7 +204,7 @@ class ReminderViewTests(TestCase):
 class DocumentManagementTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.category = Category.objects.create(name="EKG")
+        self.category = Category.objects.create(name="EKG-Dokumente")
         self.device = MedicalDevice.objects.create(name="Monitor", category=self.category, serial_number="SN-77")
 
     def test_documents_page_loads(self):
@@ -270,7 +270,14 @@ class StammdatenPageTests(TestCase):
     def setUp(self):
         self.client = Client()
         Category.objects.create(name="Testkategorie")
-        Category.objects.create(name="Zentrifuge", dguv3_interval_months=12, mtk_interval_months=24)
+        Category.objects.create(name="Zentrifuge-Test", dguv3_interval_months=12, mtk_interval_months=24)
+
+    def test_default_categories_are_seeded(self):
+        response = self.client.get(reverse("stammdaten"))
+
+        self.assertEqual(response.status_code, 200)
+        for category_name in ["AGE-Reader", "Defibrillator", "EKG", "Sonstiges", "Zentrifuge"]:
+            self.assertContains(response, category_name)
 
     def test_stammdaten_has_no_document_upload_section(self):
         response = self.client.get(reverse("stammdaten"))
