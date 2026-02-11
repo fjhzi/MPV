@@ -41,7 +41,6 @@ class MedicalDeviceForm(BootstrapStyledModelForm):
             "serial_number",
             "cohort_device_number",
             "manufacturer",
-            "ce_marking",
             "delivery_date",
             "contact_data",
             "notes",
@@ -53,13 +52,16 @@ class MedicalDeviceForm(BootstrapStyledModelForm):
         }
 
 
-class CategoryForm(forms.ModelForm):
+class CategoryForm(BootstrapStyledModelForm):
     class Meta:
         model = Category
-        fields = ["name"]
-        widgets = {
-            "name": forms.TextInput(attrs={"class": "form-control"}),
-        }
+        fields = [
+            "name",
+            "dguv3_interval_months",
+            "mtk_interval_months",
+            "stk_interval_months",
+            "calibration_interval_months",
+        ]
 
 
 class RoomForm(forms.ModelForm):

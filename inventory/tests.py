@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import Client, TestCase
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -275,6 +277,64 @@ class StammdatenPageTests(TestCase):
         self.assertNotContains(response, "Dokument hochladen")
 
 
+class CategoryAttributesTests(TestCase):
+    def setUp(self):
+        self.client = Client()
+
+    def test_create_category_with_optional_intervals(self):
+        response = self.client.post(
+            reverse("stammdaten"),
+            {
+                "action": "create_category",
+                "name": "Anästhesie",
+                "dguv3_interval_months": 12,
+                "mtk_interval_months": 24,
+                "stk_interval_months": 36,
+                "calibration_interval_months": 18,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        category = Category.objects.get(name="Anästhesie")
+        self.assertEqual(category.dguv3_interval_months, 12)
+        self.assertEqual(category.mtk_interval_months, 24)
+        self.assertEqual(category.stk_interval_months, 36)
+        self.assertEqual(category.calibration_interval_months, 18)
+
+    def test_update_category_intervals(self):
+        category = Category.objects.create(name="Intensiv")
+
+        response = self.client.post(
+            reverse("stammdaten"),
+            {
+                "action": "update_category",
+                "category_id": category.id,
+                f"category_{category.id}-name": "Intensivstation",
+                f"category_{category.id}-dguv3_interval_months": 6,
+                f"category_{category.id}-mtk_interval_months": 12,
+                f"category_{category.id}-stk_interval_months": "",
+                f"category_{category.id}-calibration_interval_months": 9,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        category.refresh_from_db()
+        self.assertEqual(category.name, "Intensivstation")
+        self.assertEqual(category.dguv3_interval_months, 6)
+        self.assertEqual(category.mtk_interval_months, 12)
+        self.assertIsNone(category.stk_interval_months)
+        self.assertEqual(category.calibration_interval_months, 9)
+
+
+class MedicalDeviceFormFieldsTests(TestCase):
+    def test_medical_device_form_has_delivery_date_but_no_ce_marking(self):
+        response = self.client.get(reverse("device-create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="delivery_date"')
+        self.assertNotContains(response, 'name="ce_marking"')
+
+
 class EventActionsTests(TestCase):
     def setUp(self):
         self.client = Client()
@@ -317,6 +377,22 @@ class EventActionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         events = list(response.context["events"])
         self.assertEqual(events, [newer, older])
+
+
+class CategorySchemaFallbackTests(TestCase):
+    @patch("inventory.views.Category.objects.only")
+    @patch("inventory.views.Category.objects.all", side_effect=Exception("force"))
+    def test_dashboard_handles_category_schema_mismatch(self, _all_mock, only_mock):
+        from django.db import DatabaseError
+
+        _all_mock.side_effect = DatabaseError("missing column")
+        only_mock.return_value = Category.objects.none()
+
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["categories_schema_unavailable"])
+
 
 
 class DeviceDetailViewResilienceTests(TestCase):
