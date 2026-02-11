@@ -5,6 +5,10 @@ from django.db import models
 class Category(models.Model):
     name = models.CharField(max_length=120, unique=True)
     description = models.TextField(blank=True)
+    dguv3_interval_months = models.PositiveIntegerField(null=True, blank=True)
+    mtk_interval_months = models.PositiveIntegerField(null=True, blank=True)
+    stk_interval_months = models.PositiveIntegerField(null=True, blank=True)
+    calibration_interval_months = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
         ordering = ["name"]
@@ -41,7 +45,6 @@ class MedicalDevice(models.Model):
     serial_number = models.CharField(max_length=120, unique=True)
     cohort_device_number = models.CharField(max_length=120, blank=True)
     manufacturer = models.CharField(max_length=120, blank=True)
-    ce_marking = models.CharField(max_length=120, blank=True)
     delivery_date = models.DateField(null=True, blank=True)
     contact_data = models.TextField(blank=True)
     notes = models.TextField(blank=True)

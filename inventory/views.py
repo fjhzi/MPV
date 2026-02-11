@@ -165,7 +165,12 @@ class CategoryListCreateView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["category_form"] = CategoryForm()
         context["room_form"] = RoomForm()
-        context["categories"] = Category.objects.all()
+        categories = Category.objects.all()
+        context["categories"] = categories
+        context["category_edit_forms"] = [
+            (category, CategoryForm(instance=category, prefix=f"category_{category.pk}"))
+            for category in categories
+        ]
         context["rooms"] = Room.objects.all()
         return context
 
@@ -177,6 +182,11 @@ class CategoryListCreateView(TemplateView):
                 form.save()
         elif action == "create_room":
             form = RoomForm(request.POST)
+            if form.is_valid():
+                form.save()
+        elif action == "update_category":
+            category = get_object_or_404(Category, pk=request.POST.get("category_id"))
+            form = CategoryForm(request.POST, instance=category, prefix=f"category_{category.pk}")
             if form.is_valid():
                 form.save()
         elif action == "delete_category":
