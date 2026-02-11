@@ -235,6 +235,29 @@
     .btn {
       border-radius: 0.65rem;
     }
+
+    .pagination {
+      --bs-pagination-bg: var(--mpv-surface);
+      --bs-pagination-border-color: var(--mpv-border);
+      --bs-pagination-color: var(--mpv-link);
+      --bs-pagination-hover-color: var(--mpv-text);
+      --bs-pagination-hover-bg: color-mix(in srgb, var(--mpv-surface) 86%, #6f89ff 14%);
+      --bs-pagination-hover-border-color: var(--mpv-border);
+      --bs-pagination-active-color: #ffffff;
+      --bs-pagination-active-bg: var(--mpv-link);
+      --bs-pagination-active-border-color: var(--mpv-link);
+      --bs-pagination-disabled-color: color-mix(in srgb, var(--mpv-muted) 85%, transparent);
+      --bs-pagination-disabled-bg: color-mix(in srgb, var(--mpv-surface) 94%, var(--mpv-border) 6%);
+      --bs-pagination-disabled-border-color: var(--mpv-border);
+      --bs-pagination-focus-color: var(--mpv-text);
+      --bs-pagination-focus-bg: color-mix(in srgb, var(--mpv-surface) 84%, #6f89ff 16%);
+      --bs-pagination-focus-box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--mpv-link) 38%, transparent);
+    }
+
+    .pagination .page-link {
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
     .row-overdue { background-color: var(--row-overdue); }
     .row-warning { background-color: var(--row-warning); }
 
