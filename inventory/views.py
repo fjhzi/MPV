@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
-from .models import Category, DeviceAppointment, MedicalDevice, Room
+from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
 
 
 class DashboardView(ListView):
@@ -187,10 +187,14 @@ class DocumentManagementView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        if request.POST.get("action") == "upload_document":
+        action = request.POST.get("action")
+        if action == "upload_document":
             form = CategoryDocumentForm(request.POST, request.FILES)
             if form.is_valid():
                 form.save()
+        elif action == "delete_document":
+            document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
+            document.delete()
         return self.get(request, *args, **kwargs)
 
 
