@@ -95,3 +95,16 @@ class DeviceAppointment(models.Model):
         from django.utils import timezone
 
         return (self.due_date - timezone.localdate()).days
+
+
+class DeviceEvent(models.Model):
+    medical_device = models.ForeignKey(MedicalDevice, on_delete=models.CASCADE, related_name="events")
+    event_date = models.DateField()
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-event_date", "-created_at"]
+
+    def __str__(self) -> str:
+        return f"Ereignis {self.medical_device.name} - {self.event_date}"

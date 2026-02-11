@@ -10,8 +10,9 @@ from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
-from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
-from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
+from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, DeviceEventForm, MedicalDeviceForm, RoomForm
+from .models import Category, DeviceAppointment, DeviceEvent, MedicalDevice, Room
+#from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
 
 
 class DashboardView(ListView):
@@ -136,6 +137,8 @@ class MedicalDeviceDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context["appointment_form"] = DeviceAppointmentForm()
         context["appointments"] = self.object.appointments.all()
+        context["event_form"] = DeviceEventForm()
+        context["events"] = self.object.events.all()
         context["category_documents"] = self.object.category.documents.all()
         return context
 
@@ -264,4 +267,23 @@ class AppointmentToggleCompleteView(View):
         appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
         appointment.completed = not appointment.completed
         appointment.save(update_fields=["completed"])
+        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
+
+
+class EventCreateView(CreateView):
+    model = DeviceEvent
+    form_class = DeviceEventForm
+
+    def form_valid(self, form):
+        form.instance.medical_device_id = self.kwargs["pk"]
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy("device-detail", kwargs={"pk": self.kwargs["pk"]})
+
+
+class EventDeleteView(View):
+    def post(self, request, device_pk, event_pk):
+        event = get_object_or_404(DeviceEvent, pk=event_pk, medical_device_id=device_pk)
+        event.delete()
         return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
