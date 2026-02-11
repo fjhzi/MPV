@@ -85,6 +85,9 @@
         </form>
 
         <div class="list-group">
+          {% if appointments_unavailable %}
+            <div class="alert alert-warning" role="alert">Termine können aktuell nicht geladen werden. Bitte Migrationen ausführen (python manage.py migrate).</div>
+          {% endif %}
           {% for appointment in appointments %}
             <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3">
               <div>
@@ -129,6 +132,9 @@
         </form>
 
         <div class="list-group">
+          {% if events_unavailable %}
+            <div class="alert alert-warning" role="alert">Ereignisse können aktuell nicht geladen werden. Bitte Migrationen ausführen (python manage.py migrate).</div>
+          {% endif %}
           {% for event in events %}
             <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3">
               <div>
