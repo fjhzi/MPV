@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, DeviceEventForm, MedicalDeviceForm, RoomForm
-#from .models import Category, DeviceAppointment, DeviceEvent, MedicalDevice, Room
+from .models import Category, DeviceAppointment, DeviceEvent, MedicalDevice, Room
 from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
 
 
