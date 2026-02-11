@@ -33,7 +33,15 @@
         <h2 class="h5 mb-3">Kategoriedokumente</h2>
         <ul class="list-group list-group-flush">
           {% for doc in category_documents %}
-            <li class="list-group-item px-0"><a href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.title }}</a></li>
+            <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
+              <a href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.title }}</a>
+              <form method="post" action="{% url 'documents' %}" class="m-0" onsubmit="return confirm('Dokument wirklich löschen?');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_document">
+                <input type="hidden" name="document_id" value="{{ doc.id }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Löschen</button>
+              </form>
+            </li>
           {% empty %}
             <li class="list-group-item text-muted px-0">Keine Dokumente hinterlegt.</li>
           {% endfor %}

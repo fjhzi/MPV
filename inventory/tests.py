@@ -202,6 +202,7 @@ class DocumentManagementTests(TestCase):
     def setUp(self):
         self.client = Client()
         self.category = Category.objects.create(name="EKG")
+        self.device = MedicalDevice.objects.create(name="Monitor", category=self.category, serial_number="SN-77")
 
     def test_documents_page_loads(self):
         response = self.client.get(reverse("documents"))
@@ -224,6 +225,42 @@ class DocumentManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.category.documents.count(), 1)
+
+    def test_documents_page_shows_categories_in_accordion(self):
+        response = self.client.get(reverse("documents"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "accordion-button")
+        self.assertContains(response, "EKG (0 Dokumente)")
+
+    def test_delete_document_from_documents_page(self):
+        document = self.category.documents.create(
+            title="Anleitung",
+            file=SimpleUploadedFile("manual.txt", b"delete me", content_type="text/plain"),
+        )
+
+        response = self.client.post(
+            reverse("documents"),
+            {
+                "action": "delete_document",
+                "document_id": document.id,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(self.category.documents.filter(id=document.id).exists())
+
+    def test_device_detail_shows_document_delete_button_with_confirmation(self):
+        self.category.documents.create(
+            title="Anleitung",
+            file=SimpleUploadedFile("manual.txt", b"detail", content_type="text/plain"),
+        )
+
+        response = self.client.get(reverse("device-detail", kwargs={"pk": self.device.id}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="action" value="delete_document"')
+        self.assertContains(response, "Dokument wirklich löschen?")
 
 
 class StammdatenPageTests(TestCase):
