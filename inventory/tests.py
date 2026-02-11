@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
 from .models import Category, DeviceAppointment, DeviceEvent, MedicalDevice, Room
+from .views import MedicalDeviceDetailView
 
 
 class DashboardViewTests(TestCase):
@@ -316,3 +317,24 @@ class EventActionsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         events = list(response.context["events"])
         self.assertEqual(events, [newer, older])
+
+
+class DeviceDetailViewResilienceTests(TestCase):
+    def test_safe_related_list_returns_empty_and_sets_flag_on_database_error(self):
+        class BrokenManager:
+            def all(self):
+                from django.db import DatabaseError
+
+                raise DatabaseError("missing table")
+
+        context = {}
+        view = MedicalDeviceDetailView()
+
+        result = view._safe_related_list(
+            BrokenManager(),
+            missing_table_context_key="events_unavailable",
+            context=context,
+        )
+
+        self.assertEqual(result, [])
+        self.assertTrue(context["events_unavailable"])

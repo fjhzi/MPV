@@ -3,6 +3,7 @@ import datetime
 from django.core.exceptions import PermissionDenied
 
 from django.http import HttpResponseRedirect
+from django.db import DatabaseError
 from django.db.models import ProtectedError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -11,8 +12,7 @@ from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, DeviceEventForm, MedicalDeviceForm, RoomForm
-from .models import Category, DeviceAppointment, DeviceEvent, MedicalDevice, Room
-from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
+from .models import Category, CategoryDocument, DeviceAppointment, DeviceEvent, MedicalDevice, Room
 
 
 class DashboardView(ListView):
@@ -133,12 +133,27 @@ class MedicalDeviceDetailView(DetailView):
     template_name = "inventory/device_detail.html"
     context_object_name = "device"
 
+    def _safe_related_list(self, manager, *, missing_table_context_key, context):
+        try:
+            return list(manager.all())
+        except DatabaseError:
+            context[missing_table_context_key] = True
+            return []
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["appointment_form"] = DeviceAppointmentForm()
-        context["appointments"] = self.object.appointments.all()
+        context["appointments"] = self._safe_related_list(
+            self.object.appointments,
+            missing_table_context_key="appointments_unavailable",
+            context=context,
+        )
         context["event_form"] = DeviceEventForm()
-        context["events"] = self.object.events.all()
+        context["events"] = self._safe_related_list(
+            self.object.events,
+            missing_table_context_key="events_unavailable",
+            context=context,
+        )
         context["category_documents"] = self.object.category.documents.all()
         return context
 
