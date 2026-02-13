@@ -212,6 +212,7 @@ class DocumentManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Dokument hochladen")
+        self.assertContains(response, "Datei per Drag-and-Drop")
 
     def test_upload_document_from_documents_page(self):
         file = SimpleUploadedFile("manual.txt", b"test content", content_type="text/plain")
