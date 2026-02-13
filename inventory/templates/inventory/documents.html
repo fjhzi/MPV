@@ -6,23 +6,103 @@
     <div class="card shadow-sm">
       <div class="card-header bg-transparent py-3"><h2 class="h5 mb-0">Dokument hochladen</h2></div>
       <div class="card-body">
-        <form method="post" enctype="multipart/form-data" class="row g-3 align-items-end">
+        <style>
+          .document-dropzone {
+            border: 2px dashed var(--mpv-border);
+            border-radius: 0.9rem;
+            min-height: 230px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+            cursor: pointer;
+          }
+
+          .document-dropzone i {
+            font-size: 1.6rem;
+            margin-bottom: 0.5rem;
+            color: var(--mpv-link);
+          }
+
+          .document-dropzone-active {
+            border-color: var(--mpv-link);
+            background-color: color-mix(in srgb, var(--mpv-surface) 88%, #6f89ff 12%);
+          }
+        </style>
+        <form method="post" enctype="multipart/form-data" class="row g-3 align-items-stretch" id="document-upload-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="upload_document">
-          <div class="col-md-4">
-            <label class="form-label" for="{{ document_form.category.id_for_label }}">{{ document_form.category.label }}</label>
-            {{ document_form.category }}
+          <div class="col-lg-6">
+            <label class="form-label" for="document-dropzone">Datei per Drag-and-Drop</label>
+            <div class="document-dropzone h-100" id="document-dropzone" tabindex="0" role="button" aria-label="Datei per Drag-and-Drop hochladen oder klicken, um Datei auszuwählen">
+              <i class="fa-solid fa-cloud-arrow-up" aria-hidden="true"></i>
+              <p class="mb-1 fw-semibold">Datei hier hineinziehen</p>
+              <p class="text-muted mb-0">oder klicken, um den Dateidialog zu öffnen</p>
+            </div>
           </div>
-          <div class="col-md-4">
-            <label class="form-label" for="{{ document_form.title.id_for_label }}">{{ document_form.title.label }}</label>
-            {{ document_form.title }}
+          <div class="col-lg-6 d-flex flex-column gap-3">
+            <div>
+              <label class="form-label" for="{{ document_form.category.id_for_label }}">{{ document_form.category.label }}</label>
+              {{ document_form.category }}
+            </div>
+            <div>
+              <label class="form-label" for="{{ document_form.title.id_for_label }}">{{ document_form.title.label }}</label>
+              {{ document_form.title }}
+            </div>
+            <div>
+              <label class="form-label" for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
+              {{ document_form.file }}
+            </div>
+            <div class="d-flex justify-content-end">
+              <button class="btn btn-primary" type="submit">Upload</button>
+            </div>
           </div>
-          <div class="col-md-4">
-            <label class="form-label" for="{{ document_form.file.id_for_label }}">{{ document_form.file.label }}</label>
-            {{ document_form.file }}
-          </div>
-          <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit">Upload</button></div>
         </form>
+        <script>
+          (function () {
+            const dropzone = document.getElementById('document-dropzone');
+            const fileInput = document.getElementById('{{ document_form.file.id_for_label }}');
+
+            if (!dropzone || !fileInput) {
+              return;
+            }
+
+            const activateDropzone = () => dropzone.classList.add('document-dropzone-active');
+            const deactivateDropzone = () => dropzone.classList.remove('document-dropzone-active');
+
+            dropzone.addEventListener('click', () => fileInput.click());
+            dropzone.addEventListener('keydown', (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                fileInput.click();
+              }
+            });
+
+            ['dragenter', 'dragover'].forEach((eventName) => {
+              dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                activateDropzone();
+              });
+            });
+
+            ['dragleave', 'dragend', 'drop'].forEach((eventName) => {
+              dropzone.addEventListener(eventName, (event) => {
+                event.preventDefault();
+                deactivateDropzone();
+              });
+            });
+
+            dropzone.addEventListener('drop', (event) => {
+              if (!event.dataTransfer || !event.dataTransfer.files.length) {
+                return;
+              }
+              fileInput.files = event.dataTransfer.files;
+            });
+          })();
+        </script>
       </div>
     </div>
   </div>
