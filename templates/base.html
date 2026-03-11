@@ -132,6 +132,31 @@
       background: #333333; /* Neutrales Grau für den Toggle im Dark Mode */
     }
 
+    /* --- Checkboxen (Form-Check) anpassen --- */
+    
+    /* 1. Normaler Zustand (nicht abgehakt) */
+    .form-check-input {
+      background-color: var(--mpv-surface) !important;
+      border-color: var(--mpv-muted) !important; /* Etwas heller/deutlicher als der normale Rahmen */
+    }
+
+    /* 2. Wenn man mit der Maus reinklickt oder per Tastatur hinnavigiert */
+    .form-check-input:focus {
+      border-color: var(--mpv-link) !important;
+      box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--mpv-link) 25%, transparent) !important;
+    }
+
+    /* 3. Wenn die Checkbox aktiv (abgehakt) ist */
+    .form-check-input:checked {
+      background-color: var(--mpv-link) !important; /* Nimmt dein schönes Salbeigrün */
+      border-color: var(--mpv-link) !important;
+    }
+
+    /* Optional: Den Text des Titels leicht durchstreichen */
+    .entry-completed .fw-semibold {
+        text-decoration: line-through;
+    }
+
     .theme-toggle .thumb {
       position: absolute;
       top: 2px;

@@ -89,18 +89,21 @@
             <div class="alert alert-warning" role="alert">Termine können aktuell nicht geladen werden. Bitte Migrationen ausführen (python manage.py migrate).</div>
           {% endif %}
           {% for appointment in appointments %}
-            <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3">
+            <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3 {% if appointment.completed %}entry-completed{% endif %}">
               <div>
-                <div class="fw-semibold">{{ appointment.get_appointment_type_display }} – {{ appointment.due_date }}</div>
+                <div class="fw-semibold">{{ appointment.get_appointment_type_display }} - {{ appointment.due_date }}</div>
                 {% if appointment.note %}
                   <div class="text-muted small mt-1">{{ appointment.note }}</div>
                 {% endif %}
               </div>
               <div class="d-flex align-items-center gap-2">
-                <form method="post" action="{% url 'appointment-toggle-complete' device.pk appointment.pk %}" class="m-0">
+                <form method="post" action="{% url 'appointment-toggle-complete' device.pk appointment.pk %}" class="mx-5">
                   {% csrf_token %}
-                  <div class="form-check m-0" title="Erledigt umschalten">
-                    <input class="form-check-input" type="checkbox" onchange="this.form.submit()" {% if appointment.completed %}checked{% endif %}>
+                  <div class="form-check form-check-reverse m-0" title="Erledigt umschalten">
+                    <input class="form-check-input" type="checkbox" id="check-{{ appointment.pk }}" onchange="this.form.submit()" {% if appointment.completed %}checked{% endif %}>
+                    <label class="form-check-label" for="check-{{ appointment.pk }}" style="cursor: pointer; margin-right: 0.5rem;">
+                      erledigt?
+                    </label>
                   </div>
                 </form>
                 <form method="post" action="{% url 'appointment-delete' device.pk appointment.pk %}" class="m-0">
