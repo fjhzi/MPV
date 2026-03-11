@@ -57,7 +57,7 @@
               {{ document_form.file }}
             </div>
             <div class="d-flex justify-content-end">
-              <button class="btn btn-primary" type="submit">Upload</button>
+              <button class="btn btn-save" type="submit">Upload</button>
             </div>
           </div>
         </form>
@@ -142,7 +142,7 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="delete_document">
                         <input type="hidden" name="document_id" value="{{ doc.id }}">
-                        <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                        <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
                       </form>
                     </li>
                   {% empty %}

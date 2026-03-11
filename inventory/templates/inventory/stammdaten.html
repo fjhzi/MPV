@@ -30,7 +30,7 @@
               {% endfor %}
             </div>
           </div>
-          <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
+          <div class="col-12 d-flex justify-content-end"><button class="btn btn-save" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
         </form>
       </div>
     </div>
@@ -49,7 +49,7 @@
               {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
             </div>
           {% endfor %}
-          <div class="col-12 d-flex justify-content-end"><button class="btn btn-primary" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
+          <div class="col-12 d-flex justify-content-end"><button class="btn btn-save" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
         </form>
       </div>
     </div>
@@ -78,7 +78,7 @@
               <div class="d-flex gap-2">
                 {% if not categories_schema_unavailable %}
                 <button
-                  class="btn btn-sm btn-outline-primary"
+                  class="btn btn-sm btn-edit"
                   type="button"
                   data-bs-toggle="collapse"
                   data-bs-target="#edit-category-{{ category.id }}"
@@ -94,7 +94,7 @@
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete_category">
                     <input type="hidden" name="category_id" value="{{ category.id }}">
-                    <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
                   </form>
                 {% endif %}
               </div>
@@ -112,7 +112,7 @@
                   </div>
                 {% endfor %}
                 <div class="col-12 d-flex justify-content-end mt-1">
-                  <button class="btn btn-sm btn-primary" type="submit">Änderungen speichern</button>
+                  <button class="btn btn-sm btn-save" type="submit">Änderungen speichern</button>
                 </div>
               </form>
             </div>{% endif %}
@@ -135,7 +135,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="action" value="delete_room">
                 <input type="hidden" name="room_id" value="{{ room.id }}">
-                <button class="btn btn-sm btn-outline-danger" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
               </form>
             {% endif %}
           </li>

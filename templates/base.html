@@ -9,13 +9,16 @@
   <style>
     :root {
       color-scheme: light;
-      /* Salbeigrün - Light Mode */
+      /* Salbeigrün-Touch - Light Mode Backgrounds */
       --mpv-bg: #f2f5f3;
       --mpv-text: #2c3e32;
       --mpv-surface: #ffffff;
       --mpv-border: #c8d6ce;
+      
+      /* Grüne Navbar - Light Mode */
       --mpv-nav-start: #7a9e87;
       --mpv-nav-end: #5c8069;
+      
       --mpv-link: #4a7c59;
       --mpv-muted: #6b7d72;
       --mpv-highlight: #7a9e87; /* Für Hover-Mixes */
@@ -34,16 +37,21 @@
 
     html[data-theme="dark"] {
       color-scheme: dark;
-      /* Salbeigrün - Dark Mode */
-      --mpv-bg: #121a15;
-      --mpv-text: #e2e8e4;
-      --mpv-surface: #1b261f;
-      --mpv-border: #2a3b30;
-      --mpv-nav-start: #23362a;
-      --mpv-nav-end: #1a2920;
+      /* Grau-Schwarz - Dark Mode Backgrounds (Neutral) */
+      --mpv-bg: #121212;
+      --mpv-text: #e0e0e0;
+      --mpv-surface: #1e1e1e;
+      --mpv-border: #333333;
+      
+      /* Dunkelgrüne Navbar - Dark Mode (Abgestuft) */
+      --mpv-nav-start: #3a4f42;
+      --mpv-nav-end: #25332a;
+      
+      --mpv-muted: #9e9e9e;
+      
+      /* Salbeigrüne Akzente bleiben für Links und Hover */
       --mpv-link: #8ebfa0;
-      --mpv-muted: #94a69b;
-      --mpv-highlight: #4a7c59; /* Für Hover-Mixes im Dark Mode */
+      --mpv-highlight: #4a7c59; 
       
       /* Status Rows - Dark */
       --row-overdue: rgba(201, 92, 92, 0.25);
@@ -66,7 +74,7 @@
     /* --- Navbar --- */
     .navbar-modern {
       background: linear-gradient(135deg, var(--mpv-nav-start), var(--mpv-nav-end));
-      box-shadow: 0 10px 30px rgba(18, 26, 21, 0.25);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
     }
 
     .navbar-modern .nav-link,
@@ -108,6 +116,10 @@
       transition: background-color 0.25s ease;
       display: block;
     }
+    
+    html[data-theme="dark"] .theme-toggle .track {
+      background: #333333; /* Neutrales Grau für den Toggle im Dark Mode */
+    }
 
     .theme-toggle .thumb {
       position: absolute;
@@ -146,12 +158,12 @@
     }
 
     .theme-toggle input:checked + .track {
-      background: #e6ebe8;
+      background: #e0e0e0;
     }
 
     .theme-toggle input:checked + .track .thumb {
       transform: translateX(32px);
-      background: #121a15;
+      background: #121212;
     }
 
     .theme-toggle input:checked + .track .icon-sun {
@@ -211,7 +223,7 @@
     /* --- Cards & Forms --- */
     .card {
       border-radius: 1rem;
-      box-shadow: 0 8px 24px rgba(18, 26, 21, 0.06);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     }
 
     .card-header {

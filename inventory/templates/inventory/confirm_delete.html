@@ -5,8 +5,8 @@
   <p>Möchtest du <strong>{{ object.name }}</strong> wirklich löschen?</p>
   <form method="post">
     {% csrf_token %}
-    <button class="btn btn-danger" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
-    <a class="btn btn-outline-secondary" href="{% url 'device-detail' object.pk %}" aria-label="Abbrechen" title="Abbrechen"><i class="fa-solid fa-ban" aria-hidden="true"></i></a>
+    <button class="btn btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+    <a class="btn btn-cancel" href="{% url 'device-detail' object.pk %}" aria-label="Abbrechen" title="Abbrechen"><i class="fa-solid fa-ban" aria-hidden="true"></i></a>
   </form>
 </div></div>
 {% endblock %}
