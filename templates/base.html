@@ -365,35 +365,57 @@
   </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-modern mb-4">
-  <div class="container d-flex align-items-center gap-3">
-    <a class="navbar-brand fw-semibold" href="/">MPV</a>
-    <div class="navbar-nav me-auto">
-      <a class="nav-link" href="/">Dashboard</a>
-      <a class="nav-link" href="/stammdaten/">Stammdaten</a>
-      <a class="nav-link" href="/dokumente/">Dokumente</a>
-      <a class="nav-link" href="/reminders/">Reminder</a>
-      <a class="nav-link" href="/admin/">Admin</a>
-    </div>
+<nav class="navbar navbar-expand-lg navbar-modern mb-4 shadow-sm">
+  <div class="container">
+    
+    <a class="navbar-brand fw-bold" href="/">MPV</a>
 
-    <label class="theme-toggle mb-0" for="theme-switch">
-      <input type="checkbox" id="theme-switch" aria-label="Dark Mode umschalten">
-      <span class="track">
-        <span class="thumb" aria-hidden="true">
-          <span class="icon icon-sun">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="4.8" stroke="currentColor" stroke-width="2.1"/>
-              <path d="M12 2.8V5.2M12 18.8V21.2M21.2 12H18.8M5.2 12H2.8M18.55 5.45L16.85 7.15M7.15 16.85L5.45 18.55M18.55 18.55L16.85 16.85M7.15 7.15L5.45 5.45" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
-            </svg>
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Navigation umschalten">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarContent">
+      
+      <div class="navbar-nav mx-auto mb-2 mb-lg-0 gap-2">
+        <a class="nav-link d-flex align-items-center gap-2 rounded px-3 transition-all" href="/">
+          <i class="fa-solid fa-chart-line"></i> Dashboard
+        </a>
+        <a class="nav-link d-flex align-items-center gap-2 rounded px-3 transition-all" href="/stammdaten/">
+          <i class="fa-solid fa-database"></i> Stammdaten
+        </a>
+        <a class="nav-link d-flex align-items-center gap-2 rounded px-3 transition-all" href="/dokumente/">
+          <i class="fa-regular fa-file-lines"></i> Dokumente
+        </a>
+        <a class="nav-link d-flex align-items-center gap-2 rounded px-3 transition-all" href="/reminders/">
+          <i class="fa-regular fa-bell"></i> Reminder
+        </a>
+        <a class="nav-link d-flex align-items-center gap-2 rounded px-3 transition-all" href="/admin/">
+          <i class="fa-solid fa-gear"></i> Admin
+        </a>
+      </div>
+
+      <div class="d-flex align-items-center ms-lg-auto mt-3 mt-lg-0 ps-lg-3 border-start-lg">
+        <label class="theme-toggle mb-0 cursor-pointer" for="theme-switch">
+          <input type="checkbox" id="theme-switch" aria-label="Dark Mode umschalten" class="d-none">
+          <span class="track position-relative d-inline-block">
+            <span class="thumb" aria-hidden="true">
+              <span class="icon icon-sun">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="4.8" stroke="currentColor" stroke-width="2.1"/>
+                  <path d="M12 2.8V5.2M12 18.8V21.2M21.2 12H18.8M5.2 12H2.8M18.55 5.45L16.85 7.15M7.15 16.85L5.45 18.55M18.55 18.55L16.85 16.85M7.15 7.15L5.45 5.45" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="icon icon-moon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15.5 3.8C13.1 5.1 11.5 7.7 11.5 10.7C11.5 15 15 18.5 19.3 18.5C20.1 18.5 20.8 18.4 21.5 18.1C20.2 20.5 17.7 22.1 14.7 22.1C10 22.1 6.2 18.3 6.2 13.6C6.2 9.8 8.7 6.5 12.1 5.1C13.1 4.7 14.3 4.2 15.5 3.8Z" fill="currentColor"/>
+                </svg>
+              </span>
+            </span>
           </span>
-          <span class="icon icon-moon">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M15.5 3.8C13.1 5.1 11.5 7.7 11.5 10.7C11.5 15 15 18.5 19.3 18.5C20.1 18.5 20.8 18.4 21.5 18.1C20.2 20.5 17.7 22.1 14.7 22.1C10 22.1 6.2 18.3 6.2 13.6C6.2 9.8 8.7 6.5 12.1 5.1C13.1 4.7 14.3 4.2 15.5 3.8Z" fill="currentColor"/>
-            </svg>
-          </span>
-        </span>
-      </span>
-    </label>
+        </label>
+      </div>
+
+    </div>
   </div>
 </nav>
 <main class="container py-2 pb-4">
