@@ -2,22 +2,84 @@
 {% block content %}
 <div class="card shadow-sm">
   <div class="card-header bg-transparent py-3">
-    <h1 class="h4 mb-0">Formular</h1>
-  </div>
+  <h1 class="h4 mb-0">
+    {% if form.instance.pk %}
+      Medizinprodukt bearbeiten
+    {% else %}
+      Medizinprodukt hinzufügen
+    {% endif %}
+  </h1>
+</div>
   <div class="card-body">
     <form method="post" enctype="multipart/form-data" class="row g-3">
       {% csrf_token %}
-      {% for field in form %}
-        <div class="col-12">
-          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-          {{ field }}
-          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-        </div>
-      {% endfor %}
-      <div class="col-12 d-flex gap-2 justify-content-end">
-        <a class="btn btn-cancel" href="/" aria-label="Abbrechen" title="Abbrechen"><i class="fa-solid fa-ban" aria-hidden="true"></i></a>
-        <button class="btn btn-save px-4" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button>
+
+      <div class="col-md-6">
+        <label class="form-label fw-bold" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}
+        {% for error in form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold" for="{{ form.manufacturer.id_for_label }}">{{ form.manufacturer.label }}</label>
+        {{ form.manufacturer }}
+        {% for error in form.manufacturer.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label fw-bold" for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+        {{ form.category }}
+        {% for error in form.category.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label fw-bold" for="{{ form.room.id_for_label }}">{{ form.room.label }}</label>
+        {{ form.room }}
+        {% for error in form.room.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label fw-bold" for="{{ form.activity_status.id_for_label }}">{{ form.activity_status.label }}</label>
+        {{ form.activity_status }}
+        {% for error in form.activity_status.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <label class="form-label fw-bold" for="{{ form.functional_status.id_for_label }}">{{ form.functional_status.label }}</label>
+        {{ form.functional_status }}
+        {% for error in form.functional_status.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label fw-bold" for="{{ form.serial_number.id_for_label }}">{{ form.serial_number.label }}</label>
+        {{ form.serial_number }}
+        {% for error in form.serial_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold" for="{{ form.cohort_device_number.id_for_label }}">{{ form.cohort_device_number.label }}</label>
+        {{ form.cohort_device_number }}
+        {% for error in form.cohort_device_number.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-4">
+        <label class="form-label fw-bold" for="{{ form.delivery_date.id_for_label }}">{{ form.delivery_date.label }}</label>
+        {{ form.delivery_date }}
+        {% for error in form.delivery_date.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label fw-bold" for="{{ form.contact_data.id_for_label }}">{{ form.contact_data.label }}</label>
+        {{ form.contact_data }}
+        {% for error in form.contact_data.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label fw-bold" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+        {{ form.notes }}
+        {% for error in form.notes.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </div>
+
+      <div class="col-12 d-flex gap-2 justify-content-end mt-4">
+        <a class="btn btn-cancel text-decoration-none" href="/" aria-label="Abbrechen" title="Abbrechen">
+            <i class="fa-solid fa-ban" aria-hidden="true"></i> Abbrechen
+        </a>
+        <button class="btn btn-save px-4" type="submit" aria-label="Speichern" title="Speichern">
+            <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Speichern
+        </button>
       </div>
     </form>
   </div>

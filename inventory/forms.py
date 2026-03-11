@@ -6,6 +6,10 @@ from .models import Category, CategoryDocument, DeviceAppointment, DeviceEvent, 
 class DateInput(forms.DateInput):
     input_type = "date"
 
+    def __init__(self, **kwargs):
+        # Erzwingt das ISO-Format, das HTML5-Datumsfelder benötigen
+        kwargs.setdefault("format", "%Y-%m-%d")
+        super().__init__(**kwargs)
 
 class BootstrapStyledModelForm(forms.ModelForm):
     """Apply Bootstrap classes consistently to all form widgets."""
@@ -28,7 +32,6 @@ class BootstrapStyledModelForm(forms.ModelForm):
                 classes.append(base_class)
             widget.attrs["class"] = " ".join(filter(None, classes))
 
-
 class MedicalDeviceForm(BootstrapStyledModelForm):
     class Meta:
         model = MedicalDevice
@@ -50,7 +53,20 @@ class MedicalDeviceForm(BootstrapStyledModelForm):
             "contact_data": forms.Textarea(attrs={"rows": 2}),
             "notes": forms.Textarea(attrs={"rows": 3}),
         }
-
+        # HIER: Deutsche Bezeichnungen festlegen
+        labels = {
+            "name": "Name des Geräts",
+            "category": "Kategorie",
+            "room": "Raum",
+            "activity_status": "Aktivitätsstatus",
+            "functional_status": "Funktionsstatus",
+            "serial_number": "Seriennummer",
+            "cohort_device_number": "Gerätenummer (Kohorte)",
+            "manufacturer": "Hersteller",
+            "delivery_date": "Lieferdatum",
+            "contact_data": "Kontaktdaten",
+            "notes": "Anmerkungen",
+        }
 
 class CategoryForm(BootstrapStyledModelForm):
     class Meta:
