@@ -1,6 +1,18 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="h3 mb-3">Stammdaten</h1>
+
+{% if messages %}
+  <div class="mb-3">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
 {% if categories_schema_unavailable %}
   <div class="alert alert-warning" role="alert">Neue Kategorie-Attribute sind noch nicht verfügbar. Bitte Migrationen ausführen (<code>python manage.py migrate</code>).</div>
 {% endif %}
@@ -90,7 +102,7 @@
                 </button>
                 {% endif %}
                 {% if request.user.is_staff %}
-                  <form method="post" class="m-0">
+                  <form method="post" class="m-0" onsubmit="return confirm('Möchten Sie diese Kategorie wirklich löschen?');">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete_category">
                     <input type="hidden" name="category_id" value="{{ category.id }}">
@@ -123,21 +135,55 @@
       </ul>
     </div></div>
   </div>
+  
   <div class="col-lg-6">
     <div class="card shadow-sm"><div class="card-body">
       <h2 class="h5">Räume</h2>
       <ul class="list-group list-group-flush">
-        {% for room in rooms %}
-          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-            <span>{{ room.name }}</span>
-            {% if request.user.is_staff %}
-              <form method="post" class="m-0">
+        {% for room, edit_form in room_edit_forms %}
+          <li class="list-group-item px-0">
+            <div class="d-flex justify-content-between align-items-center gap-3">
+              <div class="fw-semibold">{{ room.name }}</div>
+              <div class="d-flex gap-2">
+                <button
+                  class="btn btn-sm btn-edit"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#edit-room-{{ room.id }}"
+                  aria-expanded="false"
+                  aria-controls="edit-room-{{ room.id }}"
+                >
+                  <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                  <span class="visually-hidden">Bearbeiten</span>
+                </button>
+                
+                {% if request.user.is_staff %}
+                  <form method="post" class="m-0" onsubmit="return confirm('Möchten Sie diesen Raum wirklich löschen?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_room">
+                    <input type="hidden" name="room_id" value="{{ room.id }}">
+                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                  </form>
+                {% endif %}
+              </div>
+            </div>
+            
+            <div class="collapse mt-2" id="edit-room-{{ room.id }}">
+              <form method="post" class="row g-1 p-2 bg-light rounded border room-edit-form">
                 {% csrf_token %}
-                <input type="hidden" name="action" value="delete_room">
+                <input type="hidden" name="action" value="update_room">
                 <input type="hidden" name="room_id" value="{{ room.id }}">
-                <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                {% for field in edit_form %}
+                  <div class="col-12"> <label class="form-label small mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                  </div>
+                {% endfor %}
+                <div class="col-12 d-flex justify-content-end mt-1">
+                  <button class="btn btn-sm btn-save" type="submit">Änderungen speichern</button>
+                </div>
               </form>
-            {% endif %}
+            </div>
           </li>
         {% empty %}
           <li class="text-muted list-group-item px-0">Keine Räume.</li>
@@ -148,9 +194,13 @@
 </div>
 
 <style>
+  /* Styling auch auf room-edit-form anwenden */
   .category-edit-form input,
   .category-edit-form select,
-  .category-edit-form textarea {
+  .category-edit-form textarea,
+  .room-edit-form input,
+  .room-edit-form select,
+  .room-edit-form textarea {
     min-height: calc(1.5em + 0.35rem + 2px);
     padding: 0.15rem 0.4rem;
     font-size: 0.875rem;

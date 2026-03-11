@@ -1,6 +1,17 @@
 <!doctype html>
-<html lang="de" data-theme="light">
+<html lang="de">
 <head>
+  <script>
+    (function() {
+      var savedTheme = localStorage.getItem('mpv-theme');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>MPV</title>
@@ -184,8 +195,6 @@
     .table-responsive,
     .modal-content,
     .list-group-item,
-    .form-control,
-    .form-select,
     .btn-outline-primary,
     .table,
     .bg-white,
@@ -195,6 +204,23 @@
       background-color: var(--mpv-surface) !important;
       border-color: var(--mpv-border) !important;
       color: var(--mpv-text);
+    }
+
+    /* --- Spezifische Formular-Styles (Inputs, Selects) --- */
+    .form-control,
+    .form-select {
+      background-color: var(--mpv-surface) !important;
+      border-color: var(--mpv-border) !important;
+      color: var(--mpv-text) !important; /* !important erzwingt die helle Schrift im Dark Mode */
+    }
+
+    /* Das passiert, wenn du in das Feld klickst (Fokus) */
+    .form-control:focus,
+    .form-select:focus {
+      background-color: var(--mpv-surface) !important;
+      border-color: var(--mpv-link) !important; /* Grüne Umrandung beim Reinklicken */
+      color: var(--mpv-text) !important; /* Text bleibt hell! */
+      box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--mpv-link) 25%, transparent) !important;
     }
 
     a,
@@ -336,7 +362,7 @@
     .table td.reminder-due-warning {
       background-color: var(--row-warning) !important;
     }
-</style>
+  </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-modern mb-4">
@@ -381,24 +407,14 @@
     const toggle = document.getElementById('theme-switch');
     const key = 'mpv-theme';
 
-    const getInitialTheme = () => {
-      const saved = localStorage.getItem(key);
-      if (saved === 'dark' || saved === 'light') {
-        return saved;
-      }
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    };
+    // Toggle Checkbox Zustand setzen basierend auf dem Wert, 
+    // der bereits vom Skript im <head> festgelegt wurde.
+    toggle.checked = root.getAttribute('data-theme') === 'dark';
 
-    const applyTheme = (theme) => {
-      root.setAttribute('data-theme', theme);
-      toggle.checked = theme === 'dark';
-    };
-
-    applyTheme(getInitialTheme());
-
+    // Event Listener für den Klick auf den Schalter
     toggle.addEventListener('change', function () {
       const nextTheme = toggle.checked ? 'dark' : 'light';
-      applyTheme(nextTheme);
+      root.setAttribute('data-theme', nextTheme);
       localStorage.setItem(key, nextTheme);
     });
   })();

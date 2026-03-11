@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.contrib import messages
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, DeviceEventForm, MedicalDeviceForm, RoomForm
@@ -197,7 +198,6 @@ class MedicalDeviceDetailView(DetailView):
         context["category_documents"] = self.object.category.documents.all()
         return context
 
-
 class CategoryListCreateView(TemplateView):
     template_name = "inventory/stammdaten.html"
 
@@ -209,42 +209,83 @@ class CategoryListCreateView(TemplateView):
         context["categories"] = category_context["categories"]
         context["category_edit_forms"] = category_context["category_edit_forms"]
         context["categories_schema_unavailable"] = category_context["categories_schema_unavailable"]
-        context["rooms"] = Room.objects.all()
+        
+        # NEU: Räume und ihre Edit-Formulare laden
+        rooms = list(Room.objects.all())
+        context["rooms"] = rooms
+        context["room_edit_forms"] = [
+            (room, RoomForm(instance=room, prefix=f"room_{room.pk}"))
+            for room in rooms
+        ]
         return context
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action")
+        
         if action == "create_category":
             form = CategoryForm(request.POST)
             if form.is_valid():
                 form.save()
+                messages.success(request, "Kategorie erfolgreich erstellt.")
+                
         elif action == "create_room":
             form = RoomForm(request.POST)
             if form.is_valid():
                 form.save()
+                messages.success(request, "Raum erfolgreich erstellt.")
+                
         elif action == "update_category":
             try:
                 category = get_object_or_404(Category, pk=request.POST.get("category_id"))
                 form = CategoryForm(request.POST, instance=category, prefix=f"category_{category.pk}")
                 if form.is_valid():
                     form.save()
+                    messages.success(request, "Kategorie erfolgreich aktualisiert.")
             except DatabaseError:
                 pass
+
+        # NEU: Raum aktualisieren
+        elif action == "update_room":
+            try:
+                room = get_object_or_404(Room, pk=request.POST.get("room_id"))
+                form = RoomForm(request.POST, instance=room, prefix=f"room_{room.pk}")
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, "Raum erfolgreich aktualisiert.")
+            except DatabaseError:
+                pass
+
         elif action == "delete_category":
             if not request.user.is_staff:
                 raise PermissionDenied
             category = get_object_or_404(Category, pk=request.POST.get("category_id"))
-            try:
-                category.delete()
-            except ProtectedError:
-                pass
+            
+            # BOMBENSICHERE METHODE: Direkt über das MedicalDevice Model filtern
+            if MedicalDevice.objects.filter(category=category).exists():
+                messages.error(request, f"Die Kategorie '{category.name}' kann nicht gelöscht werden, da sie noch Geräten zugewiesen ist.")
+            else:
+                try:
+                    category.delete()
+                    messages.success(request, "Kategorie erfolgreich gelöscht.")
+                except ProtectedError:
+                    messages.error(request, "Die Kategorie ist geschützt und kann nicht gelöscht werden.")
+                    
         elif action == "delete_room":
             if not request.user.is_staff:
                 raise PermissionDenied
             room = get_object_or_404(Room, pk=request.POST.get("room_id"))
-            room.delete()
+            
+            # BOMBENSICHERE METHODE: Direkt über das MedicalDevice Model filtern
+            if MedicalDevice.objects.filter(room=room).exists():
+                messages.error(request, f"Der Raum '{room.name}' kann nicht gelöscht werden, da er noch Geräten zugewiesen ist.")
+            else:
+                try:
+                    room.delete()
+                    messages.success(request, "Raum erfolgreich gelöscht.")
+                except ProtectedError:
+                    messages.error(request, "Der Raum ist geschützt und kann nicht gelöscht werden.")
+                    
         return self.get(request, *args, **kwargs)
-
 
 class DocumentManagementView(TemplateView):
     template_name = "inventory/documents.html"
