@@ -9,30 +9,52 @@
   <style>
     :root {
       color-scheme: light;
-      --mpv-bg: #f4f7fb;
-      --mpv-text: #111827;
+      /* Salbeigrün - Light Mode */
+      --mpv-bg: #f2f5f3;
+      --mpv-text: #2c3e32;
       --mpv-surface: #ffffff;
-      --mpv-border: #dbe3ee;
-      --mpv-nav-start: #3a66ff;
-      --mpv-nav-end: #6a4dff;
-      --mpv-link: #3156db;
-      --mpv-muted: #5b6472;
-      --row-overdue: #f8d7da;
-      --row-warning: #fff3cd;
+      --mpv-border: #c8d6ce;
+      --mpv-nav-start: #7a9e87;
+      --mpv-nav-end: #5c8069;
+      --mpv-link: #4a7c59;
+      --mpv-muted: #6b7d72;
+      --mpv-highlight: #7a9e87; /* Für Hover-Mixes */
+      
+      /* Status Rows - Light */
+      --row-overdue: #fbe6e8;
+      --row-warning: #fdf5d3;
+
+      /* Button Base Colors - Light (Harmonisch abgestimmt) */
+      --btn-edit: #d98a4c;   /* Orange */
+      --btn-delete: #c95c5c; /* Rot */
+      --btn-add: #6b9e78;    /* Grün */
+      --btn-save: #5c85a6;   /* Blau */
+      --btn-cancel: #8c9690; /* Grau */
     }
 
     html[data-theme="dark"] {
       color-scheme: dark;
-      --mpv-bg: #0f1724;
-      --mpv-text: #e5ebf7;
-      --mpv-surface: #1b2435;
-      --mpv-border: #2c3a52;
-      --mpv-nav-start: #171f2f;
-      --mpv-nav-end: #232f45;
-      --mpv-link: #9ab5ff;
-      --mpv-muted: #afbdd6;
-      --row-overdue: rgba(248, 88, 112, 0.25);
-      --row-warning: rgba(255, 201, 87, 0.22);
+      /* Salbeigrün - Dark Mode */
+      --mpv-bg: #121a15;
+      --mpv-text: #e2e8e4;
+      --mpv-surface: #1b261f;
+      --mpv-border: #2a3b30;
+      --mpv-nav-start: #23362a;
+      --mpv-nav-end: #1a2920;
+      --mpv-link: #8ebfa0;
+      --mpv-muted: #94a69b;
+      --mpv-highlight: #4a7c59; /* Für Hover-Mixes im Dark Mode */
+      
+      /* Status Rows - Dark */
+      --row-overdue: rgba(201, 92, 92, 0.25);
+      --row-warning: rgba(217, 180, 76, 0.22);
+
+      /* Button Base Colors - Dark (Gedämpfter für Dark Mode) */
+      --btn-edit: #bd7339;
+      --btn-delete: #ab4949;
+      --btn-add: #578563;
+      --btn-save: #4a6f8c;
+      --btn-cancel: #737c76;
     }
 
     body {
@@ -41,9 +63,10 @@
       transition: background-color 0.25s ease, color 0.25s ease;
     }
 
+    /* --- Navbar --- */
     .navbar-modern {
       background: linear-gradient(135deg, var(--mpv-nav-start), var(--mpv-nav-end));
-      box-shadow: 0 10px 30px rgba(17, 24, 39, 0.25);
+      box-shadow: 0 10px 30px rgba(18, 26, 21, 0.25);
     }
 
     .navbar-modern .nav-link,
@@ -60,6 +83,7 @@
       opacity: 1;
     }
 
+    /* --- Theme Toggle --- */
     .theme-toggle {
       display: inline-flex;
       align-items: center;
@@ -78,7 +102,7 @@
       width: 64px;
       height: 32px;
       border-radius: 999px;
-      background: #2f343d;
+      background: #2f3b33;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
       cursor: pointer;
       transition: background-color 0.25s ease;
@@ -92,7 +116,7 @@
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #f6f6f6;
+      background: #f6f8f7;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
       transition: transform 0.25s ease, background-color 0.25s ease;
     }
@@ -112,7 +136,7 @@
     }
 
     .theme-toggle .icon-sun {
-      color: #1b1f24;
+      color: #1b261f;
       opacity: 1;
     }
 
@@ -122,12 +146,12 @@
     }
 
     .theme-toggle input:checked + .track {
-      background: #f3f3f3;
+      background: #e6ebe8;
     }
 
     .theme-toggle input:checked + .track .thumb {
       transform: translateX(32px);
-      background: #000000;
+      background: #121a15;
     }
 
     .theme-toggle input:checked + .track .icon-sun {
@@ -143,6 +167,7 @@
       outline-offset: 2px;
     }
 
+    /* --- Base Elements & Overrides --- */
     .card,
     .table-responsive,
     .modal-content,
@@ -160,14 +185,6 @@
       color: var(--mpv-text);
     }
 
-    .table {
-      --bs-table-bg: var(--mpv-surface);
-      --bs-table-color: var(--mpv-text);
-      --bs-table-border-color: var(--mpv-border);
-      --bs-table-hover-bg: color-mix(in srgb, var(--mpv-surface) 88%, #6f89ff 12%);
-      --bs-table-striped-bg: color-mix(in srgb, var(--mpv-surface) 90%, #ffffff 10%);
-    }
-
     a,
     .btn-link,
     .table a {
@@ -178,11 +195,23 @@
       color: var(--mpv-muted) !important;
     }
 
+    /* --- Tables --- */
+    .table {
+      --bs-table-bg: var(--mpv-surface);
+      --bs-table-color: var(--mpv-text);
+      --bs-table-border-color: var(--mpv-border);
+      --bs-table-hover-bg: color-mix(in srgb, var(--mpv-surface) 88%, var(--mpv-highlight) 12%);
+      --bs-table-striped-bg: color-mix(in srgb, var(--mpv-surface) 90%, #000000 3%);
+    }
+    
+    html[data-theme="dark"] .table {
+      --bs-table-striped-bg: color-mix(in srgb, var(--mpv-surface) 90%, #ffffff 3%);
+    }
 
-
+    /* --- Cards & Forms --- */
     .card {
       border-radius: 1rem;
-      box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+      box-shadow: 0 8px 24px rgba(18, 26, 21, 0.06);
     }
 
     .card-header {
@@ -204,6 +233,7 @@
       opacity: 1;
     }
 
+    /* --- Accordion --- */
     .accordion,
     .accordion-item,
     .accordion-header,
@@ -216,7 +246,7 @@
 
     .accordion-button:not(.collapsed) {
       color: var(--mpv-text);
-      background-color: color-mix(in srgb, var(--mpv-surface) 88%, #6f89ff 12%);
+      background-color: color-mix(in srgb, var(--mpv-surface) 88%, var(--mpv-highlight) 12%);
     }
 
     .accordion-button:focus {
@@ -232,16 +262,41 @@
       filter: invert(1) brightness(1.4);
     }
 
+    /* --- Custom Buttons --- */
     .btn {
       border-radius: 0.65rem;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      color: #ffffff; /* Text auf Buttons immer weiß für guten Kontrast */
+      border: none;
+    }
+    
+    .btn:hover {
+      color: #ffffff;
+      transform: translateY(-1px);
     }
 
+    .btn-edit { background-color: var(--btn-edit); }
+    .btn-edit:hover { background-color: color-mix(in srgb, var(--btn-edit) 85%, #000 15%); }
+
+    .btn-delete { background-color: var(--btn-delete); }
+    .btn-delete:hover { background-color: color-mix(in srgb, var(--btn-delete) 85%, #000 15%); }
+
+    .btn-add { background-color: var(--btn-add); }
+    .btn-add:hover { background-color: color-mix(in srgb, var(--btn-add) 85%, #000 15%); }
+
+    .btn-save { background-color: var(--btn-save); }
+    .btn-save:hover { background-color: color-mix(in srgb, var(--btn-save) 85%, #000 15%); }
+
+    .btn-cancel { background-color: var(--btn-cancel); }
+    .btn-cancel:hover { background-color: color-mix(in srgb, var(--btn-cancel) 85%, #000 15%); }
+
+    /* --- Pagination --- */
     .pagination {
       --bs-pagination-bg: var(--mpv-surface);
       --bs-pagination-border-color: var(--mpv-border);
       --bs-pagination-color: var(--mpv-link);
       --bs-pagination-hover-color: var(--mpv-text);
-      --bs-pagination-hover-bg: color-mix(in srgb, var(--mpv-surface) 86%, #6f89ff 14%);
+      --bs-pagination-hover-bg: color-mix(in srgb, var(--mpv-surface) 86%, var(--mpv-highlight) 14%);
       --bs-pagination-hover-border-color: var(--mpv-border);
       --bs-pagination-active-color: #ffffff;
       --bs-pagination-active-bg: var(--mpv-link);
@@ -250,7 +305,7 @@
       --bs-pagination-disabled-bg: color-mix(in srgb, var(--mpv-surface) 94%, var(--mpv-border) 6%);
       --bs-pagination-disabled-border-color: var(--mpv-border);
       --bs-pagination-focus-color: var(--mpv-text);
-      --bs-pagination-focus-bg: color-mix(in srgb, var(--mpv-surface) 84%, #6f89ff 16%);
+      --bs-pagination-focus-bg: color-mix(in srgb, var(--mpv-surface) 84%, var(--mpv-highlight) 16%);
       --bs-pagination-focus-box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--mpv-link) 38%, transparent);
     }
 
@@ -258,6 +313,7 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
+    /* --- Status Rows --- */
     .row-overdue { background-color: var(--row-overdue); }
     .row-warning { background-color: var(--row-warning); }
 
@@ -268,7 +324,7 @@
     .table td.reminder-due-warning {
       background-color: var(--row-warning) !important;
     }
-  </style>
+</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-modern mb-4">
