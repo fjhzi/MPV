@@ -1,5 +1,5 @@
 import datetime
-
+from datetime import date
 from django.core.exceptions import PermissionDenied
 
 from django.http import HttpResponseRedirect
@@ -168,7 +168,6 @@ class MedicalDeviceDeleteView(DeleteView):
     template_name = "inventory/confirm_delete.html"
     success_url = reverse_lazy("dashboard")
 
-
 class MedicalDeviceDetailView(DetailView):
     model = MedicalDevice
     template_name = "inventory/device_detail.html"
@@ -183,19 +182,46 @@ class MedicalDeviceDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # 1. Termine laden
         context["appointment_form"] = DeviceAppointmentForm()
-        context["appointments"] = self._safe_related_list(
+        appointments = self._safe_related_list(
             self.object.appointments,
             missing_table_context_key="appointments_unavailable",
             context=context,
         )
+        context["appointments"] = appointments
+        
+        # 2. Ereignisse laden
         context["event_form"] = DeviceEventForm()
-        context["events"] = self._safe_related_list(
+        events = self._safe_related_list(
             self.object.events,
             missing_table_context_key="events_unavailable",
             context=context,
         )
+        context["events"] = events
+        
         context["category_documents"] = self.object.category.documents.all()
+
+        # --- NEU: Listen zusammenführen und sortieren ---
+        history_items = []
+        
+        for appt in appointments:
+            appt.is_appointment = True       # Markierung für HTML
+            appt.sort_date = appt.due_date   # Einheitlicher Name zum Sortieren
+            history_items.append(appt)
+            
+        for evt in events:
+            evt.is_appointment = False       # Markierung für HTML
+            evt.sort_date = evt.event_date   # Einheitlicher Name zum Sortieren
+            history_items.append(evt)
+
+        # Sortieren: Höchstes Datum (neueste) zuerst. Fallback auf date.min, falls leer.
+        history_items.sort(key=lambda x: x.sort_date or date.min, reverse=True)
+        
+        # Gemischte Liste in den Context packen
+        context["history_items"] = history_items
+
         return context
 
 class CategoryListCreateView(TemplateView):

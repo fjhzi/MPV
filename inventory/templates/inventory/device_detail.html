@@ -22,6 +22,8 @@
           <dt class="col-sm-4">Kohorten-Nr.</dt><dd class="col-sm-8">{{ device.cohort_device_number|default:'-' }}</dd>
           <dt class="col-sm-4">Hersteller</dt><dd class="col-sm-8">{{ device.manufacturer|default:'-' }}</dd>
           <dt class="col-sm-4">Lieferdatum</dt><dd class="col-sm-8">{{ device.delivery_date|date:'d.m.Y'|default:'-' }}</dd>
+          <dt class="col-sm-4">Kontakt</dt><dd class="col-sm-8">{{ device.contact_data|default:'-'|linebreaksbr }}</dd>
+          <dt class="col-sm-4">Notizen</dt><dd class="col-sm-8">{{ device.notes|default:'-' }}</dd>
         </dl>
       </div>
     </div>
@@ -55,107 +57,148 @@
   <div class="card-header bg-transparent py-3">
     <ul class="nav nav-tabs card-header-tabs" id="detailTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments-pane" type="button" role="tab" aria-controls="appointments-pane" aria-selected="true">Termine</button>
+        <button class="nav-link active" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments-pane" type="button" role="tab" aria-controls="appointments-pane" aria-selected="true">
+          <i class="fa-regular fa-calendar-check me-1"></i> Termine
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events-pane" type="button" role="tab" aria-controls="events-pane" aria-selected="false">Ereignisse</button>
+        <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#events-pane" type="button" role="tab" aria-controls="events-pane" aria-selected="false">
+          <i class="fa-solid fa-clock-rotate-left me-1"></i> Ereignisse
+        </button>
       </li>
     </ul>
   </div>
   <div class="card-body">
+    
     <div class="tab-content" id="detailTabsContent">
+      
       <div class="tab-pane fade show active" id="appointments-pane" role="tabpanel" aria-labelledby="appointments-tab" tabindex="0">
-        <form method="post" action="{% url 'appointment-create' device.pk %}" class="row g-3 align-items-end mb-4">
+        <form method="post" action="{% url 'appointment-create' device.pk %}" class="row g-2 align-items-end mb-4">
           {% csrf_token %}
-          <div class="col-md-4">
-            <label class="form-label" for="{{ appointment_form.appointment_type.id_for_label }}">{{ appointment_form.appointment_type.label }}</label>
+          <div class="col-md-3">
+            <label class="form-label text-muted small mb-1 fw-medium" for="{{ appointment_form.appointment_type.id_for_label }}">Terminart</label>
             {{ appointment_form.appointment_type }}
           </div>
-          <div class="col-md-4">
-            <label class="form-label" for="{{ appointment_form.due_date.id_for_label }}">{{ appointment_form.due_date.label }}</label>
+          <div class="col-md-3">
+            <label class="form-label text-muted small mb-1 fw-medium" for="{{ appointment_form.due_date.id_for_label }}">Datum</label>
             {{ appointment_form.due_date }}
           </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ appointment_form.note.id_for_label }}">{{ appointment_form.note.label }}</label>
+          <div class="col-md-4">
+            <label class="form-label text-muted small mb-1 fw-medium" for="{{ appointment_form.note.id_for_label }}">Notiz</label>
             {{ appointment_form.note }}
           </div>
-          <div class="col-12 d-flex justify-content-end">
-            <button class="btn btn-add px-4" type="submit">Termin hinzufügen</button>
+          <div class="col-md-2">
+            <button class="btn btn-add w-100" type="submit">
+              <i class="fa-solid fa-plus me-1"></i> Hinzufügen
+            </button>
           </div>
         </form>
-
-        <div class="list-group">
-          {% if appointments_unavailable %}
-            <div class="alert alert-warning" role="alert">Termine können aktuell nicht geladen werden. Bitte Migrationen ausführen (python manage.py migrate).</div>
-          {% endif %}
-          {% for appointment in appointments %}
-            <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3 {% if appointment.completed %}entry-completed{% endif %}">
-              <div>
-                <div class="fw-semibold">{{ appointment.get_appointment_type_display }} - {{ appointment.due_date }}</div>
-                {% if appointment.note %}
-                  <div class="text-muted small mt-1">{{ appointment.note }}</div>
-                {% endif %}
-              </div>
-              <div class="d-flex align-items-center gap-2">
-                <form method="post" action="{% url 'appointment-toggle-complete' device.pk appointment.pk %}" class="mx-5">
-                  {% csrf_token %}
-                  <div class="form-check form-check-reverse m-0" title="Erledigt umschalten">
-                    <input class="form-check-input" type="checkbox" id="check-{{ appointment.pk }}" onchange="this.form.submit()" {% if appointment.completed %}checked{% endif %}>
-                    <label class="form-check-label" for="check-{{ appointment.pk }}" style="cursor: pointer; margin-right: 0.5rem;">
-                      erledigt?
-                    </label>
-                  </div>
-                </form>
-                <form method="post" action="{% url 'appointment-delete' device.pk appointment.pk %}" class="m-0">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-delete" type="submit" aria-label="Termin löschen" title="Termin löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
-                </form>
-              </div>
-            </div>
-          {% empty %}
-            <div class="list-group-item text-muted">Keine Termine vorhanden.</div>
-          {% endfor %}
-        </div>
       </div>
 
       <div class="tab-pane fade" id="events-pane" role="tabpanel" aria-labelledby="events-tab" tabindex="0">
-        <form method="post" action="{% url 'event-create' device.pk %}" class="row g-3 align-items-end mb-4">
+        <form method="post" action="{% url 'event-create' device.pk %}" class="row g-2 align-items-end mb-4">
           {% csrf_token %}
           <div class="col-md-4">
-            <label class="form-label" for="{{ event_form.event_date.id_for_label }}">{{ event_form.event_date.label }}</label>
+            <label class="form-label text-muted small mb-1 fw-medium" for="{{ event_form.event_date.id_for_label }}">Datum</label>
             {{ event_form.event_date }}
           </div>
-          <div class="col-12">
-            <label class="form-label" for="{{ event_form.note.id_for_label }}">{{ event_form.note.label }}</label>
+          <div class="col-md-6">
+            <label class="form-label text-muted small mb-1 fw-medium" for="{{ event_form.note.id_for_label }}">Notiz</label>
             {{ event_form.note }}
           </div>
-          <div class="col-12 d-flex justify-content-end">
-            <button class="btn btn-add px-4" type="submit">Ereignis hinzufügen</button>
+          <div class="col-md-2">
+            <button class="btn btn-add w-100" type="submit">
+              <i class="fa-solid fa-plus me-1"></i> Hinzufügen
+            </button>
           </div>
         </form>
+      </div>
+    </div>
 
-        <div class="list-group">
-          {% if events_unavailable %}
-            <div class="alert alert-warning" role="alert">Ereignisse können aktuell nicht geladen werden. Bitte Migrationen ausführen (python manage.py migrate).</div>
-          {% endif %}
-          {% for event in events %}
-            <div class="list-group-item d-flex justify-content-between align-items-center gap-3 py-3">
-              <div>
-                <div class="fw-semibold">{{ event.event_date }}</div>
-                {% if event.note %}
-                  <div class="text-muted small mt-1">{{ event.note }}</div>
-                {% endif %}
-              </div>
-              <form method="post" action="{% url 'event-delete' device.pk event.pk %}" class="m-0">
+    <hr class="text-muted opacity-25 mb-3 mt-0">
+
+    <h3 class="h6 fw-bold mb-2 text-secondary">Historie & Planung</h3>
+    
+    <div class="list-group border-0">
+      
+      {% if appointments_unavailable or events_unavailable %}
+        <div class="alert alert-warning rounded-3 shadow-sm py-1 px-2 mb-1" role="alert">
+          <i class="fa-solid fa-triangle-exclamation me-2"></i> Daten können aktuell nicht vollständig geladen werden. Bitte Migrationen ausführen.
+        </div>
+      {% endif %}
+
+      {% for item in history_items %}
+      
+        {% if item.is_appointment %}
+          <div class="list-group-item d-flex align-items-center gap-2 py-1 px-2 mb-1 rounded-3 border 
+                      {% if item.completed %}bg-light text-muted opacity-75{% else %}bg-white shadow-sm{% endif %}" 
+               style="transition: all 0.2s ease-in-out;">
+            
+            <div style="min-width: 24px;" class="flex-shrink-0 d-flex justify-content-center">
+              <form method="post" action="{% url 'appointment-toggle-complete' device.pk item.pk %}" class="m-0">
                 {% csrf_token %}
-                <button class="btn btn-sm btn-delete" type="submit" aria-label="Ereignis löschen" title="Ereignis löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                <input class="form-check-input fs-4 m-0 shadow-none" type="checkbox" 
+                       title="Als erledigt markieren" style="cursor: pointer;" 
+                       onchange="this.form.submit()" {% if item.completed %}checked{% endif %}>
               </form>
             </div>
-          {% empty %}
-            <div class="list-group-item text-muted">Keine Ereignisse vorhanden.</div>
-          {% endfor %}
+
+            <div class="row flex-grow-1 align-items-center g-1 m-0 {% if item.completed %}text-decoration-line-through{% endif %}">
+              <div class="col-12 col-md-3 fw-bold fs-6">
+                <i class="fa-regular fa-calendar-check text-primary me-2" title="Termin"></i>
+                {{ item.get_appointment_type_display }}
+              </div>
+              <div class="col-12 col-md-3 {% if not item.completed %}text-primary fw-medium{% endif %}">
+                <i class="fa-regular fa-calendar-days me-2 d-none d-md-inline text-muted"></i>{{ item.due_date|date:"d.m.Y" }}
+              </div>
+              <div class="col-12 col-md-5 small {% if not item.completed %}text-secondary{% endif %} text-truncate" title="{{ item.note }}">
+                {{ item.note|default:"-" }}
+              </div>
+            </div>
+
+            <form method="post" action="{% url 'appointment-delete' device.pk item.pk %}" class="m-0 flex-shrink-0">
+              {% csrf_token %}
+              <button class="btn btn-delete border-0 btn-sm" style="border-radius: 8px;" type="submit" aria-label="Termin löschen" title="Termin löschen">
+                <i class="fa-solid fa-trash-can fs-6" aria-hidden="true"></i>
+              </button>
+            </form>
+          </div>
+
+        {% else %}
+          <div class="list-group-item d-flex align-items-center gap-2 py-1 px-2 mb-1 rounded-3 border bg-white shadow-sm" 
+               style="transition: all 0.2s ease-in-out;">
+            
+            <div style="min-width: 24px;" class="flex-shrink-0"></div>
+
+            <div class="row flex-grow-1 align-items-center g-2 mx-1">
+              <div class="col-12 col-md-3 fw-bold fs-6">
+                <i class="fa-solid fa-clock-rotate-left text-info me-2" title="Ereignis"></i>
+                Ereignis
+              </div>
+              <div class="col-12 col-md-3 text-primary fw-medium">
+                <i class="fa-regular fa-calendar-days me-2 d-none d-md-inline text-muted"></i>{{ item.event_date|date:"d.m.Y" }}
+              </div>
+              <div class="col-12 col-md-5 small text-secondary text-truncate" title="{{ item.note }}">
+                {{ item.note|default:"-" }}
+              </div>
+            </div>
+
+            <form method="post" action="{% url 'event-delete' device.pk item.pk %}" class="m-0 flex-shrink-0">
+              {% csrf_token %}
+              <button class="btn btn-delete border-0 btn-sm" style="border-radius: 8px;" type="submit" aria-label="Ereignis löschen" title="Ereignis löschen">
+                <i class="fa-solid fa-trash-can fs-6" aria-hidden="true"></i>
+              </button>
+            </form>
+          </div>
+        {% endif %}
+
+      {% empty %}
+        <div class="text-center text-muted py-3 rounded-3 bg-light border border-dashed">
+          <i class="fa-solid fa-clipboard-list fs-3 mb-2 text-secondary opacity-50"></i>
+          <p class="mb-0 fw-medium">Bisher keine Termine oder Ereignisse vorhanden.</p>
         </div>
-      </div>
+      {% endfor %}
+
     </div>
   </div>
 </div>
