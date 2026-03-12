@@ -77,11 +77,13 @@ class CategoryDocument(models.Model):
 class DeviceAppointment(models.Model):
     class AppointmentType(models.TextChoices):
         CALIBRATION = "calibration", "Kalibrierung"
-        MAINTENANCE = "maintenance", "Wartung"
+        MAINTENANCE_MTK = "maintenance_mtk", "Wartung-MTK"
+        MAINTENANCE_STK = "maintenance_stk", "Wartung-STK"
+        MAINTENANCE_DGUV3 = "maintenance_dguv3", "Wartung-DGUV3"
         OTHER = "other", "Sonstiges"
 
     medical_device = models.ForeignKey(MedicalDevice, on_delete=models.CASCADE, related_name="appointments")
-    appointment_type = models.CharField(max_length=30, choices=AppointmentType.choices, default=AppointmentType.MAINTENANCE)
+    appointment_type = models.CharField(max_length=30, choices=AppointmentType.choices, default=AppointmentType.MAINTENANCE_MTK)
     due_date = models.DateField()
     note = models.TextField(blank=True)
     completed = models.BooleanField(default=False)

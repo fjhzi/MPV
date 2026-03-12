@@ -15,6 +15,7 @@ from .views import (
     MedicalDeviceUpdateView,
     ReminderArchiveView,
     ReminderView,
+    complete_and_reschedule,
 )
 
 urlpatterns = [
@@ -32,4 +33,6 @@ urlpatterns = [
     path("dokumente/", DocumentManagementView.as_view(), name="documents"),
     path("reminders/", ReminderView.as_view(), name="reminders"),
     path("reminders/archive/", ReminderArchiveView.as_view(), name="reminders-archive"),
+    path('event/<int:event_id>/complete-and-reschedule/', complete_and_reschedule, name='complete_and_reschedule'),
+    path('device/<int:device_pk>/appointment/<int:appointment_pk>/complete-reschedule/', complete_and_reschedule, name='appointment-complete-reschedule'),
 ]

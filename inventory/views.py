@@ -1,12 +1,14 @@
 import datetime
-from datetime import date
+from datetime import date, timedelta, datetime
+
 from django.core.exceptions import PermissionDenied
+
 
 from django.http import HttpResponseRedirect
 from django.db import DatabaseError
 from django.db.models import ProtectedError
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.contrib import messages
@@ -425,3 +427,44 @@ class EventDeleteView(View):
         event = get_object_or_404(DeviceEvent, pk=event_pk, medical_device_id=device_pk)
         event.delete()
         return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
+
+def complete_and_reschedule(request, device_pk, appointment_pk):
+    if request.method == "POST":
+        current_appointment = get_object_or_404(DeviceAppointment, id=appointment_pk, medical_device_id=device_pk)
+        device = current_appointment.medical_device
+        
+        # 1. Aktuellen Termin als erledigt markieren
+        current_appointment.completed = True
+        current_appointment.save()
+        
+        # 2. Prüfen, ob eine Wiedervorlage gewünscht ist
+        create_followup = request.POST.get("create_followup") == "true"
+        
+        if create_followup:
+            # 3. Das genaue Datum aus dem Datepicker holen
+            date_str = request.POST.get("next_interval_date")
+            
+            try:
+                # String "YYYY-MM-DD" in ein Python-Datum umwandeln
+                new_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                # Fallback: Falls das Datum leer ist oder fehlerhaft übertragen wurde
+                new_date = timezone.now().date() + timedelta(days=365)
+                
+            # Neuen Termin mit dem exakten Datum anlegen
+            DeviceAppointment.objects.create(
+                medical_device=device,
+                appointment_type=current_appointment.appointment_type,
+                due_date=new_date,
+                completed=False
+            )
+            
+            type_name = current_appointment.get_appointment_type_display()
+            messages.success(request, f"Termin '{type_name}' erledigt. Folgeprüfung am {new_date.strftime('%d.%m.%Y')} angelegt.")
+        else:
+            type_name = current_appointment.get_appointment_type_display()
+            messages.success(request, f"Termin '{type_name}' wurde als erledigt markiert.")
+            
+        return redirect('device-detail', pk=device.pk)
+        
+    return redirect('dashboard')

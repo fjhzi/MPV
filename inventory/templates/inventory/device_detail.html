@@ -135,12 +135,18 @@
                style="transition: all 0.2s ease-in-out;">
             
             <div style="min-width: 24px;" class="flex-shrink-0 d-flex justify-content-center">
-              <form method="post" action="{% url 'appointment-toggle-complete' device.pk item.pk %}" class="m-0">
-                {% csrf_token %}
-                <input class="form-check-input fs-4 m-0 shadow-none" type="checkbox" 
-                       title="Als erledigt markieren" style="cursor: pointer;" 
-                       onchange="this.form.submit()" {% if item.completed %}checked{% endif %}>
-              </form>
+              <input class="form-check-input fs-4 m-0 shadow-none" type="checkbox" 
+                     title="Als erledigt markieren" style="cursor: pointer;"
+                     {% if item.completed %}
+                         checked disabled
+                     {% else %}
+                         onclick="event.preventDefault(); initRescheduleModal(
+                             '{% url 'appointment-complete-reschedule' device.pk item.pk %}', 
+                             '{{ item.get_appointment_type_display|escapejs }}', 
+                             '{{ device.category.name|escapejs }}',
+                             '{% if 'stk' in item.appointment_type %}{{ device.category.stk_interval_months|default:12 }}{% elif 'mtk' in item.appointment_type %}{{ device.category.mtk_interval_months|default:12 }}{% elif 'dguv3' in item.appointment_type %}{{ device.category.dguv3_interval_months|default:24 }}{% else %}12{% endif %}'
+                         )"
+                     {% endif %}>
             </div>
 
             <div class="row flex-grow-1 align-items-center g-1 m-0 {% if item.completed %}text-decoration-line-through{% endif %}">
@@ -202,4 +208,125 @@
     </div>
   </div>
 </div>
+
+<!-- ========================================== -->
+<!-- MODAL: TERMIN ABSCHLIESSEN & WIEDERVORLAGE -->
+<!-- ========================================== -->
+<!-- erinnere: denge die nicht funktionieren:
+- für einen termin wurde automatisch ein folge termin erstellt -> hat geklappt
+-- wenn für den folgetermin automatisch ein termin erstellt wird rechnet er nicht mehr 12 monate weiter -->
+<div class="modal fade" id="rescheduleModal" tabindex="-1" aria-labelledby="rescheduleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <form id="rescheduleForm" method="POST" action="">
+        {% csrf_token %}
+        <input type="hidden" name="create_followup" id="createFollowupField" value="false">
+
+        <!-- STEP 1: Abfrage ob Wiedervorlage gewünscht -->
+        <div id="modalStep1">
+          <div class="modal-header bg-light border-bottom-0">
+            <h5 class="modal-title fw-bold" id="rescheduleModalLabel">
+              <i class="fa-regular fa-circle-check text-primary me-2"></i>Termin abschließen
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-1">Möchten Sie für die Prüfung <strong id="displayType1" class="text-primary"></strong> eine Folge-Terminerinnerung anlegen?</p>
+            <p class="text-muted small">Der aktuelle Termin wird als erledigt markiert.</p>
+          </div>
+          <div class="modal-footer flex-column gap-2 align-items-stretch border-top-0 pt-0">
+            <button type="button" onclick="showStep2()" class="btn btn-save w-100 m-0 fw-medium">
+              Ja, nächsten Termin planen
+            </button>
+            <button type="submit" class="btn btn-cancel w-100 m-0 fw-medium">
+              Nein, nur als erledigt markieren
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Intervall festlegen (mit Datum und Infotext) -->
+        <div id="modalStep2" class="d-none">
+          <div class="modal-header bg-primary text-white border-bottom-0">
+            <h5 class="modal-title fw-bold">
+              <i class="fa-regular fa-calendar-plus me-2"></i>Nächsten Termin planen
+            </h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Schließen"></button>
+          </div>
+          <div class="modal-body bg-light">
+            
+            <!-- Die dynamische Info-Box nach deinen Vorgaben -->
+            <div class="alert alert-info border-0 shadow-sm mb-4" style="background-color: #e0f2fe; color: #0369a1;">
+                <i class="fa-solid fa-circle-info me-2"></i>
+                Für die <strong><span id="textAppType"></span></strong> bei Kategorie <strong><span id="textCategory"></span></strong> wurde ein Wartungsintervall von <strong><span id="textMonths"></span> Monaten</strong> festgelegt.<br><br>
+                Somit wurde für die nächste Prüfung der <strong><span id="textCalcDate" class="text-decoration-underline"></span></strong> errechnet.
+            </div>
+
+            <div class="mb-2">
+              <label for="inputNextDate" class="form-label text-muted small fw-bold text-uppercase mb-1">Datum bestätigen / anpassen</label>
+              <input type="date" name="next_interval_date" id="inputNextDate" class="form-control form-control-lg fw-bold shadow-sm cursor-pointer">
+            </div>
+
+          </div>
+          <div class="modal-footer border-top-0 bg-light">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+            <button type="submit" onclick="document.getElementById('createFollowupField').value='true'" class="btn btn-primary fw-medium">
+              Datum speichern & anlegen
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+let rescheduleModalInstance = null;
+
+function initRescheduleModal(actionUrl, appointmentType, categoryName, categoryMonths) {
+    const form = document.getElementById('rescheduleForm');
+    
+    // 1. Berechne das genaue zukünftige Datum (Heute + Monate)
+    const months = categoryMonths ? parseInt(categoryMonths) : 12;
+    const today = new Date();
+    const futureDate = new Date(today);
+    futureDate.setMonth(futureDate.getMonth() + months);
+
+    // 2. Datum für die Anzeige formatieren (DD.MM.YYYY)
+    const displayDate = futureDate.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    // 3. Datum für das Input-Feld (type="date") formatieren (YYYY-MM-DD)
+    const yyyy = futureDate.getFullYear();
+    const mm = String(futureDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(futureDate.getDate()).padStart(2, '0');
+    const inputDate = `${yyyy}-${mm}-${dd}`;
+
+    // 4. Texte im Modal befüllen
+    document.getElementById('displayType1').innerText = appointmentType;
+    document.getElementById('textAppType').innerText = appointmentType;
+    document.getElementById('textCategory').innerText = categoryName;
+    document.getElementById('textMonths').innerText = months;
+    document.getElementById('textCalcDate').innerText = displayDate;
+    
+    // 5. Wert in den Datepicker setzen
+    document.getElementById('inputNextDate').value = inputDate;
+    
+    // 6. Formular-Aktion setzen und Modal anzeigen
+    form.action = actionUrl;
+    document.getElementById('modalStep1').classList.remove('d-none');
+    document.getElementById('modalStep2').classList.add('d-none');
+    document.getElementById('createFollowupField').value = 'false';
+    
+    if (!rescheduleModalInstance) {
+        rescheduleModalInstance = new bootstrap.Modal(document.getElementById('rescheduleModal'));
+    }
+    rescheduleModalInstance.show();
+}
+
+function showStep2() {
+    document.getElementById('modalStep1').classList.add('d-none');
+    document.getElementById('modalStep2').classList.remove('d-none');
+    document.getElementById('createFollowupField').value = 'true';
+}
+</script>
 {% endblock %}
