@@ -95,18 +95,33 @@
     </tr>
   </thead>
   <tbody>
-    {% for device in devices %}
-      <tr onclick="window.location='{% url 'device-detail' device.pk %}'" style="cursor:pointer;">
-        <td>{{ device.name }}</td>
-        <td>{{ device.category.name }}</td>
-        <td>{{ device.room.name|default:'-' }}</td>
-        <td>{{ device.get_activity_status_display }}</td>
-        <td>{{ device.get_functional_status_display }}</td>
-        <td>{{ device.serial_number }}</td>
-      </tr>
-    {% empty %}
-      <tr><td colspan="6" class="text-center text-muted py-4">Keine Geräte gefunden.</td></tr>
-    {% endfor %}
+  {% for device in devices %}
+    <tr data-href="{% url 'device-detail' device.pk %}" onclick="window.location.href=this.dataset.href;" style="cursor:pointer;">
+      <td>{{ device.name }}</td>
+      <td>{{ device.category.name }}</td>
+      <td>{{ device.room.name|default:'-' }}</td>
+      
+      <td>
+        {% if device.get_activity_status_display == 'Aktiv' %}
+          <span class="badge rounded-pill bg-success">{{ device.get_activity_status_display }}</span>
+        {% else %}
+          <span class="badge rounded-pill bg-secondary">{{ device.get_activity_status_display }}</span>
+        {% endif %}
+      </td>
+
+      <td>
+        {% if device.get_functional_status_display == 'Funktionsfähig' %}
+          <span class="badge rounded-pill bg-success">{{ device.get_functional_status_display }}</span>
+        {% else %}
+          <span class="badge rounded-pill bg-danger">{{ device.get_functional_status_display }}</span>
+        {% endif %}
+      </td>
+
+      <td>{{ device.serial_number }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-center text-muted py-4">Keine Geräte gefunden.</td></tr>
+  {% endfor %}
   </tbody>
 </table>
 </div>
