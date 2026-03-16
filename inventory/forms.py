@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Category, CategoryDocument, DeviceAppointment, DeviceEvent, MedicalDevice, Room
+from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
 
 
 class DateInput(forms.DateInput):
@@ -94,26 +94,15 @@ class RoomForm(forms.ModelForm):
             "name": forms.TextInput(attrs={"class": "form-control"}),
         }
 
-
-class DeviceAppointmentForm(BootstrapStyledModelForm):
+class DeviceAppointmentForm(forms.ModelForm):
     class Meta:
         model = DeviceAppointment
-        fields = ["appointment_type", "due_date", "note"]
+        fields = ["appointment_type", "due_date", "note", "completed"]
         widgets = {
-            "due_date": DateInput(),
-            "note": forms.Textarea(attrs={"rows": 2}),
+            "due_date": forms.DateInput(attrs={"type": "date"}),
+            "note": forms.TextInput(attrs={"placeholder": "Kurze Notiz..."}),
+            "completed": forms.CheckboxInput(attrs={"class": "form-check-input cursor-pointer", "role": "switch"}),
         }
-
-
-class DeviceEventForm(BootstrapStyledModelForm):
-    class Meta:
-        model = DeviceEvent
-        fields = ["event_date", "note"]
-        widgets = {
-            "event_date": DateInput(),
-            "note": forms.Textarea(attrs={"rows": 2}),
-        }
-
 
 class CategoryDocumentForm(forms.ModelForm):
     class Meta:

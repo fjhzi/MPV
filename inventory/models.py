@@ -72,44 +72,47 @@ class CategoryDocument(models.Model):
 
     def __str__(self) -> str:
         return self.title
-
+from django.db import models
+from django.utils import timezone
 
 class DeviceAppointment(models.Model):
     class AppointmentType(models.TextChoices):
+        # Bestehende Keys (Wichtig für deine JS-Logik!)
         CALIBRATION = "calibration", "Kalibrierung"
         MAINTENANCE_MTK = "maintenance_mtk", "Wartung-MTK"
         MAINTENANCE_STK = "maintenance_stk", "Wartung-STK"
         MAINTENANCE_DGUV3 = "maintenance_dguv3", "Wartung-DGUV3"
+        
+        # Neue Typen für die "Ereignis"-Logik
+        REPAIR = "repair", "Reparatur"
+        INSTRUCTION = "instruction", "Einweisung"
+        VALIDATION = "validation", "Validierung"
+        SOFTWARE_UPDATE = "software_update", "Software-Update"
         OTHER = "other", "Sonstiges"
 
-    medical_device = models.ForeignKey(MedicalDevice, on_delete=models.CASCADE, related_name="appointments")
-    appointment_type = models.CharField(max_length=30, choices=AppointmentType.choices, default=AppointmentType.MAINTENANCE_MTK)
-    due_date = models.DateField()
+    medical_device = models.ForeignKey('MedicalDevice', on_delete=models.CASCADE, related_name="appointments")
+    appointment_type = models.CharField(
+        max_length=30, 
+        choices=AppointmentType.choices, 
+        default=AppointmentType.MAINTENANCE_MTK
+    )
+    
+    # Planung vs. Realität
+    due_date = models.DateField(verbose_name="Fällig am")
+    performed_date = models.DateField(null=True, blank=True, verbose_name="Durchgeführt am")
+    
     note = models.TextField(blank=True)
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["due_date"]
+        # Sortierung: Erst die unfertigen (bald fällig), dann die neuesten erledigten
+        ordering = ["completed", "due_date", "-performed_date"]
 
     def __str__(self) -> str:
-        return f"{self.get_appointment_type_display()} - {self.medical_device.name}"
+        status = "✅" if self.completed else "⏳"
+        return f"{status} {self.get_appointment_type_display()} - {self.medical_device.name}"
 
     @property
     def days_until_due(self) -> int:
-        from django.utils import timezone
-
         return (self.due_date - timezone.localdate()).days
-
-
-class DeviceEvent(models.Model):
-    medical_device = models.ForeignKey(MedicalDevice, on_delete=models.CASCADE, related_name="events")
-    event_date = models.DateField()
-    note = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-event_date", "-created_at"]
-
-    def __str__(self) -> str:
-        return f"Ereignis {self.medical_device.name} - {self.event_date}"

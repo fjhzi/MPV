@@ -14,8 +14,8 @@ from django.utils import timezone
 from django.contrib import messages
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
-from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, DeviceEventForm, MedicalDeviceForm, RoomForm
-from .models import Category, CategoryDocument, DeviceAppointment, DeviceEvent, MedicalDevice, Room
+from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
+from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room
 
 
 def _safe_category_context(*, include_edit_forms=False):
@@ -185,44 +185,29 @@ class MedicalDeviceDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # 1. Termine laden
-        context["appointment_form"] = DeviceAppointmentForm()
-        appointments = self._safe_related_list(
+        # 1. Alle Termine (Wartungen & Ereignisse) abrufen
+        all_appointments = self._safe_related_list(
             self.object.appointments,
             missing_table_context_key="appointments_unavailable",
             context=context,
         )
-        context["appointments"] = appointments
         
-        # 2. Ereignisse laden
-        context["event_form"] = DeviceEventForm()
-        events = self._safe_related_list(
-            self.object.events,
-            missing_table_context_key="events_unavailable",
-            context=context,
-        )
-        context["events"] = events
+        # 2. Aufteilen in "Anstehend" und "Historie"
+        # Anstehend: Noch nicht erledigt, sortiert nach Fälligkeit (nächste zuerst)
+        upcoming = [a for a in all_appointments if not a.completed]
+        upcoming.sort(key=lambda x: x.due_date or date.max)
         
+        # Historie: Alles was erledigt ist, sortiert nach Durchführungsdatum (neueste zuerst)
+        history = [a for a in all_appointments if a.completed]
+        history.sort(key=lambda x: x.performed_date or x.due_date or date.min, reverse=True)
+
+        # 3. Context befüllen
+        context["appointment_form"] = DeviceAppointmentForm()
+        context["appointments"] = upcoming
+        context["history_items"] = history
+        
+        # Dokumente der Kategorie (bleibt gleich)
         context["category_documents"] = self.object.category.documents.all()
-
-        # --- NEU: Listen zusammenführen und sortieren ---
-        history_items = []
-        
-        for appt in appointments:
-            appt.is_appointment = True       # Markierung für HTML
-            appt.sort_date = appt.due_date   # Einheitlicher Name zum Sortieren
-            history_items.append(appt)
-            
-        for evt in events:
-            evt.is_appointment = False       # Markierung für HTML
-            evt.sort_date = evt.event_date   # Einheitlicher Name zum Sortieren
-            history_items.append(evt)
-
-        # Sortieren: Höchstes Datum (neueste) zuerst. Fallback auf date.min, falls leer.
-        history_items.sort(key=lambda x: x.sort_date or date.min, reverse=True)
-        
-        # Gemischte Liste in den Context packen
-        context["history_items"] = history_items
 
         return context
 
@@ -408,26 +393,7 @@ class AppointmentToggleCompleteView(View):
         appointment.completed = not appointment.completed
         appointment.save(update_fields=["completed"])
         return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
-
-
-class EventCreateView(CreateView):
-    model = DeviceEvent
-    form_class = DeviceEventForm
-
-    def form_valid(self, form):
-        form.instance.medical_device_id = self.kwargs["pk"]
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy("device-detail", kwargs={"pk": self.kwargs["pk"]})
-
-
-class EventDeleteView(View):
-    def post(self, request, device_pk, event_pk):
-        event = get_object_or_404(DeviceEvent, pk=event_pk, medical_device_id=device_pk)
-        event.delete()
-        return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
-
+    
 def complete_and_reschedule(request, device_pk, appointment_pk):
     if request.method == "POST":
         current_appointment = get_object_or_404(DeviceAppointment, id=appointment_pk, medical_device_id=device_pk)
