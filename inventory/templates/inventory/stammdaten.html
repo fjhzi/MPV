@@ -16,25 +16,27 @@
 {% if categories_schema_unavailable %}
   <div class="alert alert-warning" role="alert">Neue Kategorie-Attribute sind noch nicht verfügbar. Bitte Migrationen ausführen (<code>python manage.py migrate</code>).</div>
 {% endif %}
+
 <div class="row g-3 align-items-start">
+  <!-- Kategorie erstellen -->
   <div class="col-lg-6">
-    <div class="card shadow-sm">
-      <div class="card-header bg-transparent py-3"><h2 class="h5 mb-0">Kategorie erstellen</h2></div>
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white py-3"><h2 class="h5 mb-0">Kategorie erstellen</h2></div>
       <div class="card-body">
         <form method="post" class="row g-3" id="category-create-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="create_category">
           <div class="col-12">
-            <label class="form-label" for="{{ category_form.name.id_for_label }}">{{ category_form.name.label }}</label>
+            <label class="form-label fw-bold" for="{{ category_form.name.id_for_label }}">{{ category_form.name.label }}</label>
             {{ category_form.name }}
             {% for error in category_form.name.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
           </div>
           <div class="col-12" id="category-optional-fields-wrapper" hidden>
-            <div class="row g-2">
+            <div class="row g-3">
               {% for field in category_form %}
                 {% if field.name != "name" %}
-                  <div class="col-12 col-md-6">
-                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  <div class="col-12">
+                    <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
                     {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
                   </div>
@@ -42,26 +44,36 @@
               {% endfor %}
             </div>
           </div>
-          <div class="col-12 d-flex justify-content-end"><button class="btn btn-save" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
+          <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-save px-4" type="submit" title="Speichern">
+              <i class="fa-solid fa-floppy-disk me-2"></i>Speichern
+            </button>
+          </div>
         </form>
       </div>
     </div>
   </div>
+
+  <!-- Raum erstellen -->
   <div class="col-lg-6">
-    <div class="card shadow-sm">
-      <div class="card-header bg-transparent py-3"><h2 class="h5 mb-0">Raum erstellen</h2></div>
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white py-3"><h2 class="h5 mb-0">Raum erstellen</h2></div>
       <div class="card-body">
         <form method="post" class="row g-3">
           {% csrf_token %}
           <input type="hidden" name="action" value="create_room">
           {% for field in room_form %}
             <div class="col-12">
-              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <label class="form-label fw-bold" for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
               {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
             </div>
           {% endfor %}
-          <div class="col-12 d-flex justify-content-end"><button class="btn btn-save" type="submit" aria-label="Speichern" title="Speichern"><i class="fa-solid fa-floppy-disk" aria-hidden="true"></i></button></div>
+          <div class="col-12 d-flex justify-content-end">
+            <button class="btn btn-save px-4" type="submit" title="Speichern">
+              <i class="fa-solid fa-floppy-disk me-2"></i>Speichern
+            </button>
+          </div>
         </form>
       </div>
     </div>
@@ -69,171 +81,177 @@
 </div>
 
 <div class="row g-3 mt-1">
+  <!-- Kategorien Liste -->
   <div class="col-lg-6">
-    <div class="card shadow-sm"><div class="card-body">
-      <h2 class="h5">Kategorien</h2>
-      <ul class="list-group list-group-flush">
-        {% for category, edit_form in category_edit_forms %}
-          <li class="list-group-item px-0">
-            <div class="d-flex justify-content-between align-items-start gap-3">
-              <div>
-                <div class="fw-semibold">{{ category.name }}</div>
-                {% if not categories_schema_unavailable %}{% if category.dguv3_interval_months or category.mtk_interval_months or category.stk_interval_months or category.calibration_interval_months %}
-                <div class="small text-muted d-flex flex-wrap gap-2">
-                  {% if category.dguv3_interval_months %}<span>DGUV3: {{ category.dguv3_interval_months }} Monate</span>{% endif %}
-                  {% if category.mtk_interval_months %}<span>MTK: {{ category.mtk_interval_months }} Monate</span>{% endif %}
-                  {% if category.stk_interval_months %}<span>STK: {{ category.stk_interval_months }} Monate</span>{% endif %}
-                  {% if category.calibration_interval_months %}<span>Kalibrierung: {{ category.calibration_interval_months }} Monate</span>{% endif %}
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h5 mb-4">Vorhandene Kategorien</h2>
+        <ul class="list-group list-group-flush">
+          {% for category, edit_form in category_edit_forms %}
+            <li class="list-group-item px-0 py-3">
+              <div class="d-flex justify-content-between align-items-start gap-3">
+                <div class="flex-grow-1">
+                  <div class="fw-bold text-primary">{{ category.name }}</div>
+                  {% if not categories_schema_unavailable %}
+                    {% if category.dguv3_interval_months or category.mtk_interval_months or category.stk_interval_months or category.calibration_interval_months %}
+                      <div class="small text-muted mt-2">
+                        <ul class="list-unstyled mb-0"><u>Intervall:</u>
+                          {% if category.dguv3_interval_months %}
+                            <li><i class="fa-solid fa-check-double me-1"></i> <strong>DGUV3:</strong> {{ category.dguv3_interval_months }} Monate</li>
+                          {% endif %}
+                          {% if category.mtk_interval_months %}
+                            <li><i class="fa-solid fa-microscope me-1"></i> <strong>MTK:</strong> {{ category.mtk_interval_months }} Monate</li>
+                          {% endif %}
+                          {% if category.stk_interval_months %}
+                            <li><i class="fa-solid fa-shield-heart me-1"></i> <strong>STK:</strong> {{ category.stk_interval_months }} Monate</li>
+                          {% endif %}
+                          {% if category.calibration_interval_months %}
+                            <li><i class="fa-solid fa-compass-drafting me-1"></i> <strong>Kalibrierung:</strong> {{ category.calibration_interval_months }} Monate</li>
+                          {% endif %}
+                        </ul>
+                      </div>
+                    {% endif %}
+                  {% endif %}
                 </div>
-                {% endif %}{% endif %}
+                <div class="d-flex gap-2">
+                  {% if not categories_schema_unavailable %}
+                    <button class="btn btn-sm btn-cancel" type="button" data-bs-toggle="collapse" data-bs-target="#edit-category-{{ category.id }}" aria-expanded="false">
+                      <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                  {% endif %}
+                  {% if request.user.is_staff %}
+                    <form method="post" class="m-0" onsubmit="return confirm('Möchten Sie diese Kategorie wirklich löschen?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_category">
+                      <input type="hidden" name="category_id" value="{{ category.id }}">
+                      <button class="btn btn-sm btn-delete" type="submit" title="Löschen"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                  {% endif %}
+                </div>
               </div>
-              <div class="d-flex gap-2">
-                {% if not categories_schema_unavailable %}
-                <button
-                  class="btn btn-sm btn-edit"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#edit-category-{{ category.id }}"
-                  aria-expanded="false"
-                  aria-controls="edit-category-{{ category.id }}"
-                >
-                  <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-                  <span class="visually-hidden">Bearbeiten</span>
-                </button>
-                {% endif %}
-                {% if request.user.is_staff %}
-                  <form method="post" class="m-0" onsubmit="return confirm('Möchten Sie diese Kategorie wirklich löschen?');">
+
+              <!-- Bearbeitungsbereich Kategorie (jetzt einspaltig) -->
+              {% if not categories_schema_unavailable %}
+              <div class="collapse mt-3" id="edit-category-{{ category.id }}">
+                <div class="p-3 bg-light rounded border">
+                  <h6 class="mb-3 fw-bold text-secondary">Kategorie bearbeiten</h6>
+                  <form method="post" class="row g-3 category-edit-form">
                     {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_category">
+                    <input type="hidden" name="action" value="update_category">
                     <input type="hidden" name="category_id" value="{{ category.id }}">
-                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
+                    {% for field in edit_form %}
+                      <div class="col-12">
+                        <label class="form-label small mb-1 fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                      </div>
+                    {% endfor %}
+                    <div class="col-12 d-flex justify-content-end mt-2">
+                      <button class="btn btn-sm btn-add px-3" type="submit">Änderungen speichern</button>
+                    </div>
                   </form>
-                {% endif %}
-              </div>
-            </div>
-            {% if not categories_schema_unavailable %}<div class="collapse mt-2" id="edit-category-{{ category.id }}">
-              <form method="post" class="row g-1 p-2 bg-light rounded border category-edit-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="update_category">
-                <input type="hidden" name="category_id" value="{{ category.id }}">
-                {% for field in edit_form %}
-                  <div class="col-12 col-md-6">
-                    <label class="form-label small mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                  </div>
-                {% endfor %}
-                <div class="col-12 d-flex justify-content-end mt-1">
-                  <button class="btn btn-sm btn-save" type="submit">Änderungen speichern</button>
                 </div>
-              </form>
-            </div>{% endif %}
-          </li>
-        {% empty %}
-          <li class="text-muted list-group-item px-0">Keine Kategorien.</li>
-        {% endfor %}
-      </ul>
-    </div></div>
+              </div>
+              {% endif %}
+            </li>
+          {% empty %}
+            <li class="text-muted list-group-item px-0">Keine Kategorien vorhanden.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
   </div>
   
+  <!-- Räume Liste -->
   <div class="col-lg-6">
-    <div class="card shadow-sm"><div class="card-body">
-      <h2 class="h5">Räume</h2>
-      <ul class="list-group list-group-flush">
-        {% for room, edit_form in room_edit_forms %}
-          <li class="list-group-item px-0">
-            <div class="d-flex justify-content-between align-items-center gap-3">
-              <div class="fw-semibold">{{ room.name }}</div>
-              <div class="d-flex gap-2">
-                <button
-                  class="btn btn-sm btn-edit"
-                  type="button"
-                  data-bs-toggle="collapse"
-                  data-bs-target="#edit-room-{{ room.id }}"
-                  aria-expanded="false"
-                  aria-controls="edit-room-{{ room.id }}"
-                >
-                  <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-                  <span class="visually-hidden">Bearbeiten</span>
-                </button>
-                
-                {% if request.user.is_staff %}
-                  <form method="post" class="m-0" onsubmit="return confirm('Möchten Sie diesen Raum wirklich löschen?');">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_room">
-                    <input type="hidden" name="room_id" value="{{ room.id }}">
-                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
-                  </form>
-                {% endif %}
-              </div>
-            </div>
-            
-            <div class="collapse mt-2" id="edit-room-{{ room.id }}">
-              <form method="post" class="row g-1 p-2 bg-light rounded border room-edit-form">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="update_room">
-                <input type="hidden" name="room_id" value="{{ room.id }}">
-                {% for field in edit_form %}
-                  <div class="col-12"> <label class="form-label small mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
-                    {{ field }}
-                    {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
-                  </div>
-                {% endfor %}
-                <div class="col-12 d-flex justify-content-end mt-1">
-                  <button class="btn btn-sm btn-save" type="submit">Änderungen speichern</button>
+    <div class="card shadow-sm border-0">
+      <div class="card-body">
+        <h2 class="h5 mb-4">Vorhandene Räume</h2>
+        <ul class="list-group list-group-flush">
+          {% for room, edit_form in room_edit_forms %}
+            <li class="list-group-item px-0 py-3">
+              <div class="d-flex justify-content-between align-items-center gap-3">
+                <div class="fw-bold text-primary">{{ room.name }}</div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-cancel" type="button" data-bs-toggle="collapse" data-bs-target="#edit-room-{{ room.id }}" aria-expanded="false">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                  </button>
+                  {% if request.user.is_staff %}
+                    <form method="post" class="m-0" onsubmit="return confirm('Möchten Sie diesen Raum wirklich löschen?');">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="delete_room">
+                      <input type="hidden" name="room_id" value="{{ room.id }}">
+                      <button class="btn btn-sm btn-delete" type="submit" title="Löschen"><i class="fa-solid fa-trash"></i></button>
+                    </form>
+                  {% endif %}
                 </div>
-              </form>
-            </div>
-          </li>
-        {% empty %}
-          <li class="text-muted list-group-item px-0">Keine Räume.</li>
-        {% endfor %}
-      </ul>
-    </div></div>
+              </div>
+              
+              <div class="collapse mt-3" id="edit-room-{{ room.id }}">
+                <div class="p-3 bg-light rounded border">
+                  <h6 class="mb-3 fw-bold text-secondary">Raum bearbeiten</h6>
+                  <form method="post" class="row g-3 room-edit-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_room">
+                    <input type="hidden" name="room_id" value="{{ room.id }}">
+                    {% for field in edit_form %}
+                      <div class="col-12"> 
+                        <label class="form-label small mb-1 fw-semibold" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                      </div>
+                    {% endfor %}
+                    <div class="col-12 d-flex justify-content-end mt-2">
+                      <button class="btn btn-sm btn-add px-3" type="submit">Änderungen speichern</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </li>
+          {% empty %}
+            <li class="text-muted list-group-item px-0">Keine Räume vorhanden.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
   </div>
 </div>
 
 <style>
-  /* Styling auch auf room-edit-form anwenden */
   .category-edit-form input,
   .category-edit-form select,
-  .category-edit-form textarea,
   .room-edit-form input,
-  .room-edit-form select,
-  .room-edit-form textarea {
-    min-height: calc(1.5em + 0.35rem + 2px);
-    padding: 0.15rem 0.4rem;
-    font-size: 0.875rem;
+  .room-edit-form select {
+    min-height: 38px;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.9rem;
+    border-radius: 6px;
+  }
+  .card {
+    border-radius: 12px;
+  }
+  .list-group-item {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+  .list-group-item:last-child {
+    border-bottom: none;
   }
 </style>
 
 <script>
   (function () {
     const form = document.getElementById("category-create-form");
-    if (!form) {
-      return;
-    }
+    if (!form) return;
 
     const nameField = form.querySelector('input[name="name"]');
     const wrapper = document.getElementById("category-optional-fields-wrapper");
 
-    if (!nameField || !wrapper) {
-      return;
-    }
+    if (!nameField || !wrapper) return;
 
-    const showOptionalFields = function () {
-      wrapper.hidden = false;
-    };
+    const showOptionalFields = () => { wrapper.hidden = false; };
+    const hideOptionalFields = () => { if (!nameField.value.trim()) wrapper.hidden = true; };
 
-    const hideOptionalFields = function () {
-      if (!nameField.value.trim()) {
-        wrapper.hidden = true;
-      }
-    };
-
-    if (nameField.value.trim()) {
-      showOptionalFields();
-    }
+    if (nameField.value.trim()) showOptionalFields();
 
     nameField.addEventListener("focus", showOptionalFields);
     nameField.addEventListener("blur", hideOptionalFields);
