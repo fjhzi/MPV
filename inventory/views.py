@@ -361,9 +361,9 @@ class ReminderView(ListView):
         if date_filter == "overdue":
             queryset = queryset.filter(due_date__lt=today)
         elif date_filter == "next_7":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=7))
+            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=7))
         elif date_filter == "next_30":
-            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + datetime.timedelta(days=30))
+            queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30))
         return queryset.order_by("due_date")
 
 
