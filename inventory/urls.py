@@ -14,6 +14,8 @@ from .views import (
     ReminderArchiveView,
     ReminderView,
     complete_and_reschedule,
+    sitevisit_print_view,
+    sitevisit_view,
 )
 
 urlpatterns = [
@@ -31,4 +33,6 @@ urlpatterns = [
     path("reminders/archive/", ReminderArchiveView.as_view(), name="reminders-archive"),
     path('event/<int:event_id>/complete-and-reschedule/', complete_and_reschedule, name='complete_and_reschedule'),
     path('device/<int:device_pk>/appointment/<int:appointment_pk>/complete-reschedule/', complete_and_reschedule, name='appointment-complete-reschedule'),
+    path('sitevisit/', sitevisit_view, name='sitevisit'),
+    path('sitevisit/print/', sitevisit_print_view, name='sitevisit_print'),
 ]
