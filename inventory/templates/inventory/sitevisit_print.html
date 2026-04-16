@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Site Visit Bericht</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            font-size: 14px; 
+            color: #333; 
+            line-height: 1.5; 
+            padding: 20px; 
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 { color: #333; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+        .meta-info { margin-bottom: 30px; }
+        .meta-info p { margin: 5px 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        /* vertical-align: top hinzugefügt, damit alles oben bündig bleibt */
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: #f4f4f4; font-weight: bold; }
+        
+        /* Neuer Style für die Seriennummer */
+        .serial-number { font-size: 0.85em; color: #666; margin-top: 4px; display: block; }
+        
+        .btn-container { margin-bottom: 20px; }
+        .btn { display: inline-block; padding: 10px 20px; background-color: #0d6efd; color: white; text-decoration: none; border-radius: 5px; cursor: pointer; border: none; font-size: 14px; }
+        .btn-secondary { background-color: #6c757d; margin-left: 10px; }
+        
+        /* Diese CSS-Regel versteckt die Buttons, wenn gedruckt oder als PDF gespeichert wird */
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; max-width: none; }
+        }
+    </style>
+</head>
+<!-- Öffnet automatisch den Druck-Dialog -->
+<!-- <body onload="window.print()"> -->
+<body>
+    <div class="no-print btn-container">
+        <button class="btn btn-save" onclick="window.print()">Jetzt drucken / Als PDF speichern</button>
+        <a class="btn" href="{% url 'sitevisit' %}" style="background-color: #6c757d;">Schließen</a>
+    </div>
+
+    <h1>Site Visit Bericht</h1>
+    
+    <div class="meta-info">
+        <p><strong>Erstellt am:</strong> {% now "d.m.Y H:i" %}</p>
+        <p><strong>Zeitraum:</strong> 
+            {% if start_date %}{{ start_date|date:"d.m.Y" }}{% else %}Beginn{% endif %} 
+            bis 
+            {% if end_date %}{{ end_date|date:"d.m.Y" }}{% else %}Heute{% endif %}
+        </p>
+        <p><strong>Wartungsart:</strong> {{ selected_type_display|default:"Alle" }}</p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Kategorie</th>
+                <th>Gerät / Produkt</th>
+                <th>Wartungsart</th>
+                <th>Datum</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for appointment in appointments %}
+            <tr>
+                <td>{{ appointment.medical_device.category|default:"Keine Kategorie" }}</td>
+                <td>
+                    {{ appointment.medical_device.name }}
+                    <span class="serial-number">SN: {{ appointment.medical_device.serial_number|default:"-" }}</span>
+                </td>
+                <td>{{ appointment.get_appointment_type_display }}</td>
+                <td>{{ appointment.due_date|date:"d.m.Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <!-- Colspan auf 4 erhöht, da wir jetzt 4 Spalten haben -->
+                <td colspan="4" style="text-align: center;">Keine Daten für diesen Zeitraum vorhanden.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

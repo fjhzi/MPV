@@ -2,7 +2,13 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h1 class="h3 mb-0">Erledigte Termine Archiv</h1>
-  <a class="btn btn-cancel" href="{% url 'reminders' %}">Zurück zu offenen Remindern</a>
+  <div>
+    <!-- NEUER BUTTON FÜR SITE VISIT -->
+    <a class="btn btn-save me-2" href="{% url 'sitevisit' %}">
+      <i class="bi bi-card-checklist"></i> Site Visit Ansicht
+    </a>
+    <a class="btn btn-cancel" href="{% url 'reminders' %}">Zurück zu offenen Remindern</a>
+  </div>
 </div>
 
 <div class="table-responsive bg-white border rounded">

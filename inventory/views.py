@@ -2,7 +2,9 @@ import datetime
 from datetime import date, timedelta, datetime
 
 from django.core.exceptions import PermissionDenied
-
+from django.utils.dateparse import parse_date
+from django.http import HttpResponse
+from django.template.loader import render_to_string
 
 from django.http import HttpResponseRedirect
 from django.db import DatabaseError
@@ -434,3 +436,74 @@ def complete_and_reschedule(request, device_pk, appointment_pk):
         return redirect('device-detail', pk=device.pk)
         
     return redirect('dashboard')
+
+def sitevisit_view(request):
+    """Zeigt die filterbare Liste der erledigten Termine/Wartungen an."""
+    appointments = DeviceAppointment.objects.filter(completed=True).order_by('medical_device__category', 'due_date')
+
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    # WICHTIG: getlist() holt alle markierten Checkboxen als Liste
+    selected_types = request.GET.getlist('appointment_type')
+
+    if start_date:
+        parsed_start = parse_date(start_date)
+        if parsed_start:
+            appointments = appointments.filter(due_date__gte=parsed_start)
+    
+    if end_date:
+        parsed_end = parse_date(end_date)
+        if parsed_end:
+            appointments = appointments.filter(due_date__lte=parsed_end)
+            
+    if selected_types:
+        # WICHTIG: __in prüft, ob die Terminart in der Liste der ausgewählten Typen ist
+        appointments = appointments.filter(appointment_type__in=selected_types)
+
+    context = {
+        'appointments': appointments,
+        'start_date': start_date or '',
+        'end_date': end_date or '',
+        'selected_types': selected_types,  # Liste an das Template übergeben
+        'type_choices': DeviceAppointment._meta.get_field('appointment_type').choices,
+    }
+    return render(request, 'inventory/sitevisit.html', context)
+
+
+def sitevisit_print_view(request):
+    """Generiert eine HTML Ansicht zum Drucken aus den gefilterten erledigten Terminen."""
+    appointments = DeviceAppointment.objects.filter(completed=True).order_by('medical_device__category', 'due_date')
+    
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    # Auch hier getlist() verwenden
+    selected_types = request.GET.getlist('appointment_type')
+
+    if start_date:
+        parsed_start = parse_date(start_date)
+        if parsed_start:
+            appointments = appointments.filter(due_date__gte=parsed_start)
+    
+    if end_date:
+        parsed_end = parse_date(end_date)
+        if parsed_end:
+            appointments = appointments.filter(due_date__lte=parsed_end)
+            
+    if selected_types:
+        appointments = appointments.filter(appointment_type__in=selected_types)
+
+    # Wandelt die technischen Schlüssel in einen kommagetrennten String für den Bericht um
+    selected_type_display = "Alle"
+    if selected_types:
+        choices_dict = dict(DeviceAppointment._meta.get_field('appointment_type').choices)
+        display_names = [str(choices_dict.get(t, t)) for t in selected_types]
+        selected_type_display = ", ".join(display_names)
+
+    context = {
+        'appointments': appointments,
+        'start_date': parse_date(start_date) if start_date else None,
+        'end_date': parse_date(end_date) if end_date else None,
+        'selected_type_display': selected_type_display,
+    }
+
+    return render(request, 'inventory/sitevisit_print.html', context)
