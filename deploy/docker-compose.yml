@@ -1,19 +1,30 @@
 services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+
   web:
     build:
       context: ..
       dockerfile: Dockerfile
     restart: unless-stopped
+    depends_on:
+      - db
     env_file:
       - ../.env
     volumes:
-      - mpv_data:/app/data
       - mpv_media:/app/media
       - mpv_static:/app/staticfiles
     ports:
       - "8000:8000"
 
 volumes:
-  mpv_data:
+  postgres_data:
   mpv_media:
   mpv_static:
