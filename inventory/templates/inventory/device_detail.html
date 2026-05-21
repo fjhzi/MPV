@@ -8,9 +8,10 @@
   </div>
 </div>
 
-<div class="row g-3">
+<div class="row g-3 mb-4">
+  
   <div class="col-lg-6">
-    <div class="card h-100">
+    <div class="card h-100 shadow-sm">
       <div class="card-body">
         <h2 class="h5 mb-3">Gerätedetails</h2>
         <dl class="row mb-0">
@@ -30,27 +31,42 @@
   </div>
 
   <div class="col-lg-6">
-    <div class="card h-100">
-      <div class="card-body">
-        <h2 class="h5 mb-3">Kategoriedokumente</h2>
+    <div class="card h-100 shadow-sm">
+      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
+        <h2 class="h5 mb-0">Kategoriedokumente</h2>
+        <a href="{% url 'documents' %}" class="btn btn-sm btn-save">
+          <i class="fa-solid fa-plus me-1"></i> Hinzufügen
+        </a>
+      </div>
+      
+      <div class="card-body p-0">
         <ul class="list-group list-group-flush">
           {% for doc in category_documents %}
-            <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
-              <a href="{{ doc.file.url }}" target="_blank" rel="noopener">{{ doc.title }}</a>
-              <form method="post" action="{% url 'documents' %}" class="m-0" onsubmit="return confirm('Dokument wirklich löschen?');">
-                {% csrf_token %}
-                <input type="hidden" name="action" value="delete_document">
-                <input type="hidden" name="document_id" value="{{ doc.id }}">
-                <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></button>
-              </form>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <i class="fa-solid fa-file-pdf text-danger me-2"></i>
+                <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="text-decoration-none">
+                  {{ doc.title }}
+                </a>
+              </div>
+              <div>
+                {% if doc.device %}
+                  <span class="badge bg-info text-dark">Gerätdokument</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">Kategoriedokument</span>
+                {% endif %}
+              </div>
             </li>
           {% empty %}
-            <li class="list-group-item text-muted px-0">Keine Dokumente hinterlegt.</li>
+            <li class="list-group-item text-muted py-3 text-center">
+              Bisher keine Dokumente für dieses Gerät oder diese Kategorie hinterlegt.
+            </li>
           {% endfor %}
         </ul>
       </div>
     </div>
   </div>
+
 </div>
 
 <!-- ========================================== -->

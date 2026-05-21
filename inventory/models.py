@@ -60,6 +60,17 @@ class MedicalDevice(models.Model):
 
 class CategoryDocument(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="documents")
+    
+    # NEU: Optionale Zuweisung zu einem spezifischen Gerät
+    device = models.ForeignKey(
+        MedicalDevice, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        related_name="documents",
+        verbose_name="Spezifisches Gerät"
+    )
+    
     title = models.CharField(max_length=200)
     file = models.FileField(
         upload_to="category_documents/",
@@ -72,6 +83,7 @@ class CategoryDocument(models.Model):
 
     def __str__(self) -> str:
         return self.title
+    
 from django.db import models
 from django.utils import timezone
 
