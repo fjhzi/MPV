@@ -172,14 +172,18 @@ class MedicalDeviceDeleteView(DeleteView):
     template_name = "inventory/confirm_delete.html"
     success_url = reverse_lazy("dashboard")
 
+from django.views.generic import DetailView
+from django.db import DatabaseError
+# ... (deine anderen Imports wie MedicalDevice, DeviceAppointmentForm)
+
 class MedicalDeviceDetailView(DetailView):
     model = MedicalDevice
     template_name = "inventory/device_detail.html"
     context_object_name = "device"
 
-    def _safe_related_list(self, manager, *, missing_table_context_key, context):
+    def _safe_related_list(self, queryset, *, missing_table_context_key, context):
         try:
-            return list(manager.all())
+            return list(queryset.all())
         except DatabaseError:
             context[missing_table_context_key] = True
             return []
@@ -187,28 +191,18 @@ class MedicalDeviceDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # 1. Alle Termine (Wartungen & Ereignisse) abrufen
-        all_appointments = self._safe_related_list(
-            self.object.appointments,
+        # 1. ALLE Termine abrufen, absteigend sortiert (Zukünftige/Neueste oben, Alte unten)
+        # Wir sortieren standardmäßig nach due_date
+        all_qs = self.object.appointments.all().order_by('-due_date')
+        
+        context["appointments"] = self._safe_related_list(
+            all_qs,
             missing_table_context_key="appointments_unavailable",
             context=context,
         )
         
-        # 2. Aufteilen in "Anstehend" und "Historie"
-        # Anstehend: Noch nicht erledigt, sortiert nach Fälligkeit (nächste zuerst)
-        upcoming = [a for a in all_appointments if not a.completed]
-        upcoming.sort(key=lambda x: x.due_date or date.max)
-        
-        # Historie: Alles was erledigt ist, sortiert nach Durchführungsdatum (neueste zuerst)
-        history = [a for a in all_appointments if a.completed]
-        history.sort(key=lambda x: x.performed_date or x.due_date or date.min, reverse=True)
-
-        # 3. Context befüllen
+        # 2. Context befüllen (history_items fällt komplett weg!)
         context["appointment_form"] = DeviceAppointmentForm()
-        context["appointments"] = upcoming
-        context["history_items"] = history
-        
-        # Dokumente der Kategorie (bleibt gleich)
         context["category_documents"] = self.object.category.documents.all()
 
         return context
