@@ -18,7 +18,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, T
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
 from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room
-
+import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 def _safe_category_context(*, include_edit_forms=False):
     """Return category context even when optional category columns are not migrated yet."""
@@ -203,7 +204,14 @@ class MedicalDeviceDetailView(DetailView):
         
         # 2. Context befüllen (history_items fällt komplett weg!)
         context["appointment_form"] = DeviceAppointmentForm()
-        context["category_documents"] = self.object.category.documents.all()
+        
+        # 🚨 HIER IST DIE MAGIE: 
+        # Wir nehmen alle Dokumente der Kategorie, aber filtern sie so, 
+        # dass nur die ohne spezifisches Gerät (isnull=True) 
+        # ODER die für genau dieses Gerät (device=self.object) übrig bleiben!
+        context["category_documents"] = self.object.category.documents.filter(
+            Q(device__isnull=True) | Q(device=self.object)
+        )
 
         return context
 
@@ -301,25 +309,70 @@ class DocumentManagementView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["document_form"] = CategoryDocumentForm()
+        
+        # Formular nur initialisieren, wenn es nicht schon durch einen Fehler im POST-Request übergeben wurde
+        if "document_form" not in context:
+            context["document_form"] = CategoryDocumentForm()
+            
         try:
             context["categories"] = Category.objects.only("id", "name").prefetch_related("documents")
             context["categories_schema_unavailable"] = False
         except DatabaseError:
             context["categories"] = []
             context["categories_schema_unavailable"] = True
+
+        # NEU: Geräte laden (jetzt inkl. Seriennummer!)
+        devices = MedicalDevice.objects.only('id', 'name', 'serial_number', 'category_id')
+        devices_map = {}
+        for dev in devices:
+            cat_id = str(dev.category_id)
+            if cat_id not in devices_map:
+                devices_map[cat_id] = []
+            
+            # Wir zeigen die Seriennummer an. Falls diese bei einem Gerät mal leer sein sollte, 
+            # nutzen wir als Fallback den normalen Namen.
+            # (Alternativ könntest du auch f"{dev.serial_number} - {dev.name}" nutzen)
+            display_name = dev.serial_number if dev.serial_number else dev.name
+            
+            devices_map[cat_id].append({'id': dev.id, 'name': display_name})
+            
+        context['devices_by_category_json'] = json.dumps(devices_map, cls=DjangoJSONEncoder)
+
         return context
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get("action")
+        
         if action == "upload_document":
             form = CategoryDocumentForm(request.POST, request.FILES)
             if form.is_valid():
-                form.save()
+                # commit=False speichert das Objekt noch nicht in der DB, 
+                # gibt uns aber die Instanz zum Überprüfen
+                document = form.save(commit=False)
+                
+                # 🚨 SECURITY CHECK (Fehlersicherheit)
+                # Jemand könnte im Frontend per Dev-Tools ein Gerät einer falschen Kategorie unterschieben.
+                if document.device and document.device.category != document.category:
+                    messages.error(request, "Sicherheitsverletzung: Das gewählte Gerät gehört nicht zur angegebenen Kategorie.")
+                    # Seite neu laden und das Formular MIT den Fehlern anzeigen
+                    return self.render_to_response(self.get_context_data(document_form=form))
+                
+                # Wenn alles passt: Speichern!
+                document.save()
+                messages.success(request, "Dokument erfolgreich hochgeladen.")
+            else:
+                # Standard-Formularfehler (z.B. falsches Dateiformat) abfangen
+                messages.error(request, "Bitte korrigiere die Fehler im Formular.")
+                return self.render_to_response(self.get_context_data(document_form=form))
+                
         elif action == "delete_document":
             document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
             document.delete()
-        return self.get(request, *args, **kwargs)
+            messages.success(request, "Dokument erfolgreich gelöscht.")
+            
+        # Post/Redirect/Get-Pattern: Verhindert, dass beim Neuladen der Seite (F5) 
+        # das Formular erneut abgeschickt wird. (Alternativ kannst du auch bei deinem self.get() bleiben)
+        return redirect(request.path_info)
 
 
 class AppointmentCreateView(CreateView):

@@ -107,9 +107,16 @@ class DeviceAppointmentForm(forms.ModelForm):
 class CategoryDocumentForm(forms.ModelForm):
     class Meta:
         model = CategoryDocument
-        fields = ["category", "title", "file"]
+        # NEU: "device" in die fields aufgenommen
+        fields = ["category", "device", "title", "file"] 
         widgets = {
             "category": forms.Select(attrs={"class": "form-select"}),
+            # NEU: Widget für das device Dropdown
+            "device": forms.Select(attrs={"class": "form-select"}), 
             "title": forms.TextInput(attrs={"class": "form-control"}),
             "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
+        }
+        # OPTIONAL: Ein schönes Label für das Frontend definieren
+        labels = {
+            "device": "Gerät (Optional)"
         }
