@@ -354,18 +354,33 @@ class ReminderView(ListView):
     context_object_name = "appointments"
 
     def get_queryset(self):
+        # Basis-QuerySet mit Joins[cite: 1]
         queryset = DeviceAppointment.objects.select_related("medical_device", "medical_device__category", "medical_device__room")
         date_filter = self.request.GET.get("date_filter", "all_open")
         today = timezone.localdate()
 
-        queryset = queryset.filter(completed=False)
+       # Liste der relevanten Terminarten für den Reminder
+        allowed_categories = [
+            "calibration",
+            "maintenance_mtk",
+            "maintenance_stk",
+            "maintenance_dguv3"
+        ]
 
+        # Hier auf appointment_type ändern
+        queryset = queryset.filter(
+            completed=False,
+            appointment_type__in=allowed_categories
+        )
+
+        # Datumsfilter anwenden[cite: 1]
         if date_filter == "overdue":
             queryset = queryset.filter(due_date__lt=today)
         elif date_filter == "next_7":
             queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=7))
         elif date_filter == "next_30":
             queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30))
+            
         return queryset.order_by("due_date")
 
 

@@ -29,18 +29,18 @@ POSTGRES_USER=mpv_admin
 POSTGRES_PASSWORD=dein_passwort
 POSTGRES_HOST=db
 POSTGRES_PORT=5432
-```
+
 ### 2. Windows-Fix (Line Endings)
 Damit das Start-Skript im Container fehlerfrei läuft, muss das Format einmalig für Linux korrigiert werden. Führe diesen Befehl in der **PowerShell** aus:
 ```powershell
 (Get-Content scripts/entrypoint.sh) -join "`n" | Set-Content -NoNewline scripts/entrypoint.sh
-```
+
 ### 3. Starten der Anwendung
 Baue die Container und starte sie im Hintergrund:
 
 ```powershell
 docker compose -f deploy/docker-compose.yml --env-file .env up -d --build
-```
+
 ### 4. Datenbank einrichten
 Initialisiere die Tabellen und erstelle einen Admin-Zugang:
 
@@ -50,7 +50,7 @@ docker compose -f deploy/docker-compose.yml --env-file .env exec web python mana
 
 # Admin-Nutzer erstellen
 docker compose -f deploy/docker-compose.yml --env-file .env exec web python manage.py createsuperuser
-```
+
 **Erreichbarkeit:**
 - Lokal: http://localhost:8000/admin/
 - Im Netzwerk: http://[Server-IP]:8000/admin/ 
