@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h1 class="h3 mb-0">{{ device.name }}</h1>
+  <h1 class="h3 mb-0">{{ device.name }} - <i>{{ device.serial_number }}</i></h1>
   <div class="d-flex gap-2">
     <a class="btn btn-edit" href="{% url 'device-edit' device.pk %}" aria-label="Bearbeiten" title="Bearbeiten"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></a>
     <a class="btn btn-delete" href="{% url 'device-delete' device.pk %}" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></a>

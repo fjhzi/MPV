@@ -36,6 +36,7 @@ class MedicalDevice(models.Model):
     class FunctionalStatus(models.TextChoices):
         FUNCTIONAL = "functional", "Funktionsfähig"
         DEFECTIVE = "defective", "Defekt"
+        # DISCARDED = "discarded", "Ausgemustert"
 
     name = models.CharField(max_length=180)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="devices")
