@@ -67,6 +67,7 @@
           <option value="">Zustand</option>
           <option value="functional" {% if request.GET.functional_status == 'functional' %}selected{% endif %}>Funktionsfähig</option>
           <option value="defective" {% if request.GET.functional_status == 'defective' %}selected{% endif %}>Defekt</option>
+          <option value="discarded" {% if request.GET.functional_status == 'discarded' %}selected{% endif %}>Ausgemustert</option>
         </select>
       </div>
       
@@ -91,13 +92,12 @@
       <th><a href='?{{ sort_links.room }}'>Raum</a></th>
       <th><a href='?{{ sort_links.status }}'>Status</a></th>
       <th><a href='?{{ sort_links.condition }}'>Zustand</a></th>
-      <th>Seriennummer</th>
     </tr>
   </thead>
   <tbody>
   {% for device in devices %}
     <tr data-href="{% url 'device-detail' device.pk %}" onclick="window.location.href=this.dataset.href;" style="cursor:pointer;">
-      <td>{{ device.name }}</td>
+      <td>{{ device.name }} [<i>{{ device.serial_number }}</i>]</td>
       <td>{{ device.category.name }}</td>
       <td>{{ device.room.name|default:'-' }}</td>
       
@@ -116,8 +116,6 @@
           <span class="badge rounded-pill bg-danger">{{ device.get_functional_status_display }}</span>
         {% endif %}
       </td>
-
-      <td>{{ device.serial_number }}</td>
     </tr>
   {% empty %}
     <tr><td colspan="6" class="text-center text-muted py-4">Keine Geräte gefunden.</td></tr>

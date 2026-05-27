@@ -17,18 +17,19 @@
 
 <div class="table-responsive bg-white border rounded">
 <table class="table align-middle mb-0">
-  <thead><tr><th>Produkt</th><th>Terminart</th><th>Fällig am</th><th>Tage</th><th>Status</th></tr></thead>
+  <thead><tr><th>Produkt</th><th>Raum</th><th>Terminart</th><th>Fällig am</th><th>Tage</th><th>Status</th></tr></thead>
   <tbody>
     {% for appointment in appointments %}
       <tr>
-        <td><a href="{% url 'device-detail' appointment.medical_device_id %}">{{ appointment.medical_device.name }}</a></td>
+        <td><a href="{% url 'device-detail' appointment.medical_device_id %}">{{ appointment.medical_device.name }} [<i>{{ appointment.medical_device.serial_number }}</i>]</a></td>
+        <td>{{ appointment.medical_device.room.name|default:'-' }}</td>
         <td>{{ appointment.get_appointment_type_display }}</td>
         <td class="{% if appointment.days_until_due < 0 %}reminder-due-overdue{% elif appointment.days_until_due <= 30 %}reminder-due-warning{% endif %}">{{ appointment.due_date }}</td>
         <td>{% if appointment.days_until_due < 0 %}{{ appointment.days_until_due }} (überfällig){% else %}{{ appointment.days_until_due }}{% endif %}</td>
         <td>Offen</td>
       </tr>
     {% empty %}
-      <tr><td colspan="5" class="text-muted text-center py-4">Keine offenen Termine im gewählten Zeitraum.</td></tr>
+      <tr><td colspan="6" class="text-muted text-center py-4">Keine offenen Termine im gewählten Zeitraum.</td></tr>
     {% endfor %}
   </tbody>
 </table>
