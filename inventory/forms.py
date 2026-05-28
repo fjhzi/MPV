@@ -108,12 +108,13 @@ class CategoryDocumentForm(forms.ModelForm):
     class Meta:
         model = CategoryDocument
         # NEU: "device" in die fields aufgenommen
-        fields = ["category", "device", "title", "file"] 
+        fields = ["category", "device", "title", "document_date", "file"] 
         widgets = {
             "category": forms.Select(attrs={"class": "form-select"}),
             # NEU: Widget für das device Dropdown
             "device": forms.Select(attrs={"class": "form-select"}), 
             "title": forms.TextInput(attrs={"class": "form-control"}),
+            "document_date": forms.DateInput(attrs={"type": "date"}),
             "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
         # OPTIONAL: Ein schönes Label für das Frontend definieren

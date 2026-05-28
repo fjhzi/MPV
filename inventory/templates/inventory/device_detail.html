@@ -44,17 +44,40 @@
           {% for doc in category_documents %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
               <div>
-                <i class="fa-solid fa-file-pdf text-danger me-2"></i>
-                <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="text-decoration-none">
-                  {{ doc.title }}
-                </a>
+                <div class="d-flex align-items-center mb-1">
+                  <i class="fa-solid fa-file-pdf text-danger me-2"></i>
+                  <span class="badge text-bg-light">{{ doc.document_date|date:'d.m.Y'}}</span>
+                  {% if doc.device %}
+                    <span class="badge bg-info text-dark ms-1">Gerätdokument</span>
+                  {% else %}
+                    <span class="badge bg-light text-dark ms-1">Kategoriedokument</span>
+                  {% endif %}
+                </div>
+                <div>
+                  <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="text-decoration-none text-dark fw-medium">
+                    {{ doc.title }}
+                  </a>
+                </div>
               </div>
-              <div>
-                {% if doc.device %}
-                  <span class="badge bg-info text-dark">Gerätdokument</span>
-                {% else %}
-                  <span class="badge bg-light text-dark">Kategoriedokument</span>
-                {% endif %}
+
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-edit text-primary border-0 bg-transparent p-0" 
+                        data-bs-toggle="modal" data-bs-target="#editDocumentModal"
+                        data-doc-id="{{ doc.id }}" 
+                        data-doc-title="{{ doc.title }}" 
+                        data-doc-date="{{ doc.document_date|date:'Y-m-d' }}"
+                        aria-label="Bearbeiten" title="Bearbeiten">
+                    <i class="fa-solid fa-pen-to-square fs-5"></i>
+                </button>
+                <form method="post" action="{% url 'documents' %}" class="m-0" onsubmit="return confirm('Dokument wirklich löschen?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_document">
+                    <input type="hidden" name="document_id" value="{{ doc.id }}">
+                    <input type="hidden" name="next" value="{{ request.path }}">
+                    <button class="btn btn-sm btn-delete text-danger border-0 bg-transparent p-0" type="submit" aria-label="Löschen" title="Löschen">
+                        <i class="fa-solid fa-trash fs-5"></i>
+                    </button>
+                </form>
               </div>
             </li>
           {% empty %}
@@ -310,5 +333,54 @@ function showStep2() {
     document.getElementById('modalStep2').classList.remove('d-none');
     document.getElementById('createFollowupField').value = 'true';
 }
+</script>
+<div class="modal fade" id="editDocumentModal" tabindex="-1" aria-labelledby="editDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url 'documents' %}">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title" id="editDocumentModalLabel">Dokument bearbeiten</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="action" value="edit_document">
+          <input type="hidden" name="document_id" id="edit_document_id">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          
+          <div class="mb-3">
+            <label for="edit_document_title" class="form-label">Titel</label>
+            <input type="text" class="form-control" name="title" id="edit_document_title" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_document_date" class="form-label">Datum</label>
+            <input type="date" class="form-control" name="document_date" id="edit_document_date" required>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const editDocumentModal = document.getElementById('editDocumentModal');
+    if (editDocumentModal) {
+        editDocumentModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const docId = button.getAttribute('data-doc-id');
+            const docTitle = button.getAttribute('data-doc-title');
+            const docDate = button.getAttribute('data-doc-date');
+
+            editDocumentModal.querySelector('#edit_document_id').value = docId;
+            editDocumentModal.querySelector('#edit_document_title').value = docTitle;
+            editDocumentModal.querySelector('#edit_document_date').value = docDate;
+        });
+    }
+});
 </script>
 {% endblock %}
