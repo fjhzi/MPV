@@ -366,9 +366,25 @@ class DocumentManagementView(TemplateView):
                 return self.render_to_response(self.get_context_data(document_form=form))
                 
         elif action == "delete_document":
+                document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
+                document.delete()
+                messages.success(request, "Dokument erfolgreich gelöscht.")
+                # Leitet zurück zur Ursprungsseite
+                return redirect(request.POST.get("next", request.path_info))
+
+        elif action == "edit_document":
             document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
-            document.delete()
-            messages.success(request, "Dokument erfolgreich gelöscht.")
+            new_title = request.POST.get("title")
+            new_date = request.POST.get("document_date")
+            
+            if new_title:
+                document.title = new_title
+            if new_date:
+                document.document_date = new_date
+                
+            document.save()
+            messages.success(request, "Dokument erfolgreich aktualisiert.")
+            return redirect(request.POST.get("next", request.path_info))
             
         # Post/Redirect/Get-Pattern: Verhindert, dass beim Neuladen der Seite (F5) 
         # das Formular erneut abgeschickt wird. (Alternativ kannst du auch bei deinem self.get() bleiben)
