@@ -20,54 +20,53 @@
       type="button"
       data-bs-toggle="collapse"
       data-bs-target="#dashboard-filter-collapse"
-      aria-expanded="{% if request.GET.category or request.GET.room or request.GET.activity_status or request.GET.functional_status %}true{% else %}false{% endif %}"
+      aria-expanded="true" 
       aria-controls="dashboard-filter-collapse"
     >
       <i class="fa-solid fa-sliders" aria-hidden="true"></i>
-      <span class="visually-hidden">Filter anzeigen</span>
+      <span class="visually-hidden">Filter ausblenden</span>
     </button>
   </div>
 
-  <div class="collapse mt-3 {% if request.GET.category or request.GET.room or request.GET.activity_status or request.GET.functional_status %}show{% endif %}" id="dashboard-filter-collapse">
-  <div class="card card-body border-light shadow-sm">
+  <div class="collapse mt-3 show" id="dashboard-filter-collapse">
+    <div class="card card-body border-light shadow-sm">
     
     <h5 class="card-title mb-3 text-secondary">
       <i class="fa-solid fa-filter me-2"></i>Filteroptionen
     </h5>
 
     <div class="row g-2">
-      <div class="col-md-3">
+      <div class="col-md-3">Kategorie
         <select class="form-select js-auto-submit-filter" name="category">
-          <option value="">Kategorie</option>
+          <option value="">---</option>
           {% for category in categories %}
             <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:'s' %}selected{% endif %}>{{ category.name }}</option>
           {% endfor %}
         </select>
       </div>
       
-      <div class="col-md-3">
+      <div class="col-md-3">Raum
         <select class="form-select js-auto-submit-filter" name="room">
-          <option value="">Raum</option>
+          <option value="">---</option>
           {% for room in rooms %}
             <option value="{{ room.id }}" {% if request.GET.room == room.id|stringformat:'s' %}selected{% endif %}>{{ room.name }}</option>
           {% endfor %}
         </select>
       </div>
       
-      <div class="col-md-3">
+      <div class="col-md-3">Status
         <select class="form-select js-auto-submit-filter" name="activity_status">
-          <option value="">Status</option>
+          <option value="" {% if not request.GET.activity_status %}selected{% endif %}>---</option>
           <option value="active" {% if request.GET.activity_status == 'active' %}selected{% endif %}>Aktiv</option>
-          <option value="inactive" {% if request.GET.activity_status == 'inactive' %}selected{% endif %}>Nicht aktiv</option>
+          <option value="inactive" {% if request.GET.activity_status == 'inactive' %}selected{% endif %}>Inaktiv</option>
         </select>
       </div>
       
-      <div class="col-md-3">
+      <div class="col-md-3">Zustand
         <select class="form-select js-auto-submit-filter" name="functional_status">
-          <option value="">Zustand</option>
+          <option value="">---</option>
           <option value="functional" {% if request.GET.functional_status == 'functional' %}selected{% endif %}>Funktionsfähig</option>
           <option value="defective" {% if request.GET.functional_status == 'defective' %}selected{% endif %}>Defekt</option>
-          <option value="discarded" {% if request.GET.functional_status == 'discarded' %}selected{% endif %}>Ausgemustert</option>
         </select>
       </div>
       
@@ -97,7 +96,11 @@
   <tbody>
   {% for device in devices %}
     <tr data-href="{% url 'device-detail' device.pk %}" onclick="window.location.href=this.dataset.href;" style="cursor:pointer;">
-      <td>{{ device.name }} [<i>{{ device.serial_number }}</i>]</td>
+      <td>{{ device.name }} 
+        <a class="text-decoration-none badge bg-primary bg-opacity-10 text-primary border border-primary-subtle rounded-pill hover-shadow">
+          <i class="bi bi-link-45deg"></i> SN: {{ device.serial_number }}
+        </a>
+      </td>
       <td>{{ device.category.name }}</td>
       <td>{{ device.room.name|default:'-' }}</td>
       
@@ -174,18 +177,38 @@
 {% endif %}
 
 <script>
-  (function () {
+  document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById('dashboard-filter-form');
-    if (!form) {
-      return;
-    }
+    if (!form) return;
 
+    // 1. Dropdowns: Bei Änderung sofort submitten
     const selects = form.querySelectorAll('.js-auto-submit-filter');
     selects.forEach(function (select) {
       select.addEventListener('change', function () {
         form.submit();
       });
     });
-  })();
+
+    // 2. Text-Input: Search as you type mit Debounce
+    const searchInput = form.querySelector('input[name="q"]');
+    let debounceTimer;
+
+    if (searchInput) {
+      // UX-Fix: Nach dem Page-Reload den Fokus wieder ins Inputfeld setzen 
+      // und den Cursor ans Ende des Textes stellen, falls gesucht wurde.
+      if (searchInput.value.length > 0) {
+        searchInput.focus();
+        searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+      }
+
+      searchInput.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        // Wartet 500ms nach dem letzten Tastendruck, bevor abgeschickt wird
+        debounceTimer = setTimeout(function() {
+          form.submit();
+        }, 500); 
+      });
+    }
+  });
 </script>
 {% endblock %}
