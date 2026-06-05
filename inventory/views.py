@@ -108,6 +108,7 @@ class DashboardView(ListView):
                 search_query |= Q(functional_status=mapped_functional_status)
 
             queryset = queryset.filter(search_query)
+
         if category:
             queryset = queryset.filter(category_id=category)
         if room:
@@ -131,6 +132,10 @@ class DashboardView(ListView):
         context["categories"] = category_context["categories"]
         context["categories_schema_unavailable"] = category_context["categories_schema_unavailable"]
         context["rooms"] = Room.objects.all()
+        
+        # 🚨 HIER DIE ZWEITE ÄNDERUNG: aktuellen Status für das Template übergeben
+        context["activity_status"] = self.request.GET.get("activity_status", "active").strip()
+        
         context["sort"] = self.request.GET.get("sort", "name")
         context["direction"] = self.request.GET.get("direction", "asc")
         context["next_direction"] = "desc" if context["direction"] == "asc" else "asc"
@@ -211,7 +216,7 @@ class MedicalDeviceDetailView(DetailView):
         # ODER die für genau dieses Gerät (device=self.object) übrig bleiben!
         context["category_documents"] = self.object.category.documents.filter(
             Q(device__isnull=True) | Q(device=self.object)
-        )
+        ).order_by('-document_date')
 
         return context
 
@@ -444,7 +449,7 @@ class ReminderView(ListView):
         elif date_filter == "next_30":
             queryset = queryset.filter(due_date__gte=today, due_date__lte=today + timedelta(days=30))
             
-        return queryset.order_by("due_date")
+        return queryset.order_by("due_date", "medical_device")
 
 
 class ReminderArchiveView(ListView):

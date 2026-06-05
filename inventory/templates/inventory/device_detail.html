@@ -4,7 +4,9 @@
   <h1 class="h3 mb-0">{{ device.name }} - <i>{{ device.serial_number }}</i></h1>
   <div class="d-flex gap-2">
     <a class="btn btn-edit" href="{% url 'device-edit' device.pk %}" aria-label="Bearbeiten" title="Bearbeiten"><i class="fa-solid fa-pen-to-square" aria-hidden="true"></i></a>
+    {% if request.user.is_staff %}
     <a class="btn btn-delete" href="{% url 'device-delete' device.pk %}" aria-label="Löschen" title="Löschen"><i class="fa-solid fa-trash" aria-hidden="true"></i></a>
+    {% endif %}
   </div>
 </div>
 
@@ -12,8 +14,12 @@
   
   <div class="col-lg-6">
     <div class="card h-100 shadow-sm">
+      <div class="card-header py-3 d-flex align-items-center">
+        <h3 class="h6 fw-bold mb-0">
+          <i class="fa-solid fa-list-alt me-2"></i>Gerätedetails
+        </h3>
+      </div>
       <div class="card-body">
-        <h2 class="h5 mb-3">Gerätedetails</h2>
         <dl class="row mb-0">
           <dt class="col-sm-4">Kategorie</dt><dd class="col-sm-8">{{ device.category }}</dd>
           <dt class="col-sm-4">Raum</dt><dd class="col-sm-8">{{ device.room|default:'-' }}</dd>
@@ -32,8 +38,10 @@
 
   <div class="col-lg-6">
     <div class="card h-100 shadow-sm">
-      <div class="card-header bg-transparent py-3 d-flex justify-content-between align-items-center">
-        <h2 class="h5 mb-0">Kategoriedokumente</h2>
+      <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h3 class="h6 fw-bold mb-0">
+          <i class="fa-solid fa-file-lines me-2"></i>Dokumente
+        </h3>
         <a href="{% url 'documents' %}" class="btn btn-sm btn-save">
           <i class="fa-solid fa-plus me-1"></i> Hinzufügen
         </a>
@@ -48,36 +56,38 @@
                   <i class="fa-solid fa-file-pdf text-danger me-2"></i>
                   <span class="badge text-bg-light">{{ doc.document_date|date:'d.m.Y'}}</span>
                   {% if doc.device %}
-                    <span class="badge bg-info text-dark ms-1">Gerätdokument</span>
+                    <span class="badge bg-info text-dark ms-1">Gerätedokument</span>
                   {% else %}
                     <span class="badge bg-light text-dark ms-1">Kategoriedokument</span>
                   {% endif %}
                 </div>
                 <div>
-                  <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="text-decoration-none text-dark fw-medium">
+                  <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="text-decoration-none fw-medium">
                     {{ doc.title }}
                   </a>
                 </div>
               </div>
 
               <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-edit text-primary border-0 bg-transparent p-0" 
+                <button type="button" class="btn btn-sm btn-edit" 
                         data-bs-toggle="modal" data-bs-target="#editDocumentModal"
                         data-doc-id="{{ doc.id }}" 
                         data-doc-title="{{ doc.title }}" 
                         data-doc-date="{{ doc.document_date|date:'Y-m-d' }}"
                         aria-label="Bearbeiten" title="Bearbeiten">
-                    <i class="fa-solid fa-pen-to-square fs-5"></i>
+                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
                 </button>
+                {% if request.user.is_staff %}
                 <form method="post" action="{% url 'documents' %}" class="m-0" onsubmit="return confirm('Dokument wirklich löschen?');">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="delete_document">
                     <input type="hidden" name="document_id" value="{{ doc.id }}">
                     <input type="hidden" name="next" value="{{ request.path }}">
-                    <button class="btn btn-sm btn-delete text-danger border-0 bg-transparent p-0" type="submit" aria-label="Löschen" title="Löschen">
-                        <i class="fa-solid fa-trash fs-5"></i>
+                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen">
+                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
                     </button>
                 </form>
+                {% endif %}
               </div>
             </li>
           {% empty %}
@@ -98,10 +108,10 @@
 <div class="card mt-4 border-0 shadow-sm">
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 class="h6 fw-bold mb-0 text-secondary">
+      <h3 class="h6 fw-bold mb-0">
         <i class="fa-solid fa-clock-rotate-left me-2"></i>Historie & Planung
       </h3>
-      <button type="button" class="btn btn-save btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addEntryModal">
+      <button type="button" class="btn btn-save btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addEntryModal">
         <i class="fa-solid fa-plus me-1"></i> Neuer Eintrag
       </button>
     </div>
@@ -164,13 +174,14 @@
                 {{ item.note|default:"-" }}
               </div>
             </div>
-
+            {% if request.user.is_staff %}
             <form method="post" action="{% url 'appointment-delete' device.pk item.pk %}" class="m-0 flex-shrink-0">
               {% csrf_token %}
               <button class="btn btn-delete border-0 btn-sm" style="border-radius: 8px;" type="submit" title="Löschen">
                 <i class="fa-solid fa-trash-can fs-6"></i>
               </button>
             </form>
+            {% endif %}
             
           </div>
         {% endfor %}
