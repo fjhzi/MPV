@@ -20,6 +20,7 @@ from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, Me
 from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room
 from .services.backup import create_export_file, restore_backup_data
 import json
+from django.core.serializers.json import DjangoJSONEncoder
 
 def _safe_category_context(*, include_edit_forms=False):
     """Return category context even when optional category columns are not migrated yet."""
