@@ -134,6 +134,14 @@ class DashboardView(ListView):
         context["categories_schema_unavailable"] = category_context["categories_schema_unavailable"]
         context["rooms"] = Room.objects.all()
         
+        # KPI Metrics for Dashboard
+        today = timezone.localdate()
+        context["total_devices_count"] = MedicalDevice.objects.count()
+        context["active_devices_count"] = MedicalDevice.objects.filter(activity_status=MedicalDevice.ActivityStatus.ACTIVE).count()
+        context["defective_devices_count"] = MedicalDevice.objects.filter(functional_status=MedicalDevice.FunctionalStatus.DEFECTIVE).count()
+        context["overdue_appointments_count"] = DeviceAppointment.objects.filter(completed=False, due_date__lt=today).count()
+        context["due_soon_appointments_count"] = DeviceAppointment.objects.filter(completed=False, due_date__gte=today, due_date__lte=today + timedelta(days=30)).count()
+
         # 🚨 HIER DIE ZWEITE ÄNDERUNG: aktuellen Status für das Template übergeben
         context["activity_status"] = self.request.GET.get("activity_status", "active").strip()
         
