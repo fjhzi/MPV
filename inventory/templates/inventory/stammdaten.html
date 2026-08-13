@@ -81,6 +81,57 @@
 </div>
 
 <div class="row g-3 mt-1">
+  <!-- Backup & Restore Sektion -->
+  <div class="col-12">
+    <div class="card shadow-sm border-0 border-top border-primary border-4">
+      <div class="card-body">
+        <h2 class="h5 mb-3 text-secondary">
+          <i class="fa-solid fa-database me-2"></i>Daten-Backup & Wiederherstellung (JSON)
+        </h2>
+        <p class="text-muted small mb-4">
+          Sichern Sie den vollständigen Datenbestand (Kategorien, Räume, Geräte, Termine und Dokumente) als JSON-Datei oder ZIP-Archiv. Beim Import wird der aktuelle Stand komplett durch das Backup ersetzt.
+        </p>
+
+        <div class="row g-4">
+          <!-- Export -->
+          <div class="col-md-6 border-end-md">
+            <h6 class="fw-bold mb-3"><i class="fa-solid fa-download me-1 text-success"></i>Daten exportieren</h6>
+            <form method="post" action="{% url 'backup-export' %}">
+              {% csrf_token %}
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" name="include_files" id="includeFilesCheck">
+                <label class="form-check-label small" for="includeFilesCheck">
+                  Hochgeladene Dokumente/Dateien einschließen (als ZIP-Archiv)
+                </label>
+              </div>
+              <button type="submit" class="btn btn-save px-4">
+                <i class="fa-solid fa-file-arrow-down me-2"></i>Backup herunterladen
+              </button>
+            </form>
+          </div>
+
+          <!-- Import -->
+          <div class="col-md-6">
+            <h6 class="fw-bold mb-3"><i class="fa-solid fa-upload me-1 text-danger"></i>Daten wiederherstellen</h6>
+            <form method="post" action="{% url 'backup-import' %}" enctype="multipart/form-data" onsubmit="return confirm('ACHTUNG: Beim Einspielen eines Backups wird der gesamte aktuelle Datenstand (Geräte, Termine, Dokumente) überschrieben! Fortfahren?');">
+              {% csrf_token %}
+              <div class="mb-3">
+                <input class="form-control form-control-sm" type="file" name="backup_file" accept=".json,.zip" required>
+                <div class="form-text small">Erlaubte Formate: .json oder .zip</div>
+              </div>
+              <button type="submit" class="btn btn-delete px-4">
+                <i class="fa-solid fa-file-arrow-up me-2"></i>Backup einspielen
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
   <!-- Kategorien Liste -->
   <div class="col-lg-6">
     <div class="card shadow-sm border-0">

@@ -16,6 +16,8 @@ from .views import (
     complete_and_reschedule,
     sitevisit_print_view,
     sitevisit_view,
+    export_backup_view,
+    import_backup_view,
 )
 
 urlpatterns = [
@@ -35,4 +37,6 @@ urlpatterns = [
     path('device/<int:device_pk>/appointment/<int:appointment_pk>/complete-reschedule/', complete_and_reschedule, name='appointment-complete-reschedule'),
     path('sitevisit/', sitevisit_view, name='sitevisit'),
     path('sitevisit/print/', sitevisit_print_view, name='sitevisit_print'),
+    path('backup/export/', export_backup_view, name='backup-export'),
+    path('backup/import/', import_backup_view, name='backup-import'),
 ]

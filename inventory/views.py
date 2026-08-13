@@ -18,8 +18,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, T
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
 from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room
+from .services.backup import create_export_file, restore_backup_data
 import json
-from django.core.serializers.json import DjangoJSONEncoder
 
 def _safe_category_context(*, include_edit_forms=False):
     """Return category context even when optional category columns are not migrated yet."""
@@ -590,3 +590,34 @@ def sitevisit_print_view(request):
     }
 
     return render(request, 'inventory/sitevisit_print.html', context)
+
+
+def export_backup_view(request):
+    if request.method == "POST":
+        include_files = request.POST.get("include_files") == "on"
+        filename, content, content_type = create_export_file(include_files=include_files)
+        response = HttpResponse(content, content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    return redirect('stammdaten')
+
+
+def import_backup_view(request):
+    if request.method == "POST":
+        backup_file = request.FILES.get("backup_file")
+        if not backup_file:
+            messages.error(request, "Bitte wähle eine Backup-Datei aus.")
+            return redirect('stammdaten')
+        
+        try:
+            stats = restore_backup_data(backup_file)
+            messages.success(
+                request, 
+                f"Backup erfolgreich eingespielt! Wiederhergestellt: "
+                f"{stats['categories']} Kategorien, {stats['rooms']} Räume, "
+                f"{stats['devices']} Geräte, {stats['documents']} Dokumente, {stats['appointments']} Termine."
+            )
+        except Exception as e:
+            messages.error(request, f"Fehler beim Wiederherstellen des Backups: {str(e)}")
+            
+    return redirect('stammdaten')
