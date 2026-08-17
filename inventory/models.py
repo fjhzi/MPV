@@ -126,3 +126,16 @@ class DeviceAppointment(models.Model):
     @property
     def days_until_due(self) -> int:
         return (self.due_date - timezone.localdate()).days
+
+
+class DeviceAuditLog(models.Model):
+    medical_device = models.ForeignKey(MedicalDevice, on_delete=models.CASCADE, related_name="audit_logs")
+    action = models.CharField(max_length=100) # z.B. "Erstellt", "Bearbeitet", "Termin erledigt"
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.created_at.strftime('%d.%m.%Y %H:%M')} - {self.medical_device.name}: {self.action}"

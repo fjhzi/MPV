@@ -172,6 +172,15 @@ class MedicalDeviceCreateView(CreateView):
     template_name = "inventory/form.html"
     success_url = reverse_lazy("dashboard")
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        DeviceAuditLog.objects.create(
+            medical_device=self.object,
+            action="Gerät erstellt",
+            description=f"Gerät '{self.object.name}' (SN: {self.object.serial_number}) wurde angelegt."
+        )
+        return response
+
 
 class MedicalDeviceUpdateView(UpdateView):
     model = MedicalDevice
@@ -180,6 +189,15 @@ class MedicalDeviceUpdateView(UpdateView):
 
     def get_success_url(self):
         return reverse_lazy("device-detail", kwargs={"pk": self.object.pk})
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        DeviceAuditLog.objects.create(
+            medical_device=self.object,
+            action="Gerät bearbeitet",
+            description=f"Stammdaten von '{self.object.name}' wurden aktualisiert."
+        )
+        return response
 
 
 class MedicalDeviceDeleteView(DeleteView):
@@ -213,6 +231,12 @@ class MedicalDeviceDetailView(DetailView):
         context["appointments"] = self._safe_related_list(
             all_qs,
             missing_table_context_key="appointments_unavailable",
+            context=context,
+        )
+
+        context["audit_logs"] = self._safe_related_list(
+            self.object.audit_logs.all(),
+            missing_table_context_key="audit_logs_unavailable",
             context=context,
         )
         
@@ -496,6 +520,12 @@ def complete_and_reschedule(request, device_pk, appointment_pk):
         # 1. Aktuellen Termin als erledigt markieren
         current_appointment.completed = True
         current_appointment.save()
+
+        DeviceAuditLog.objects.create(
+            medical_device=device,
+            action="Termin erledigt",
+            description=f"Termin '{current_appointment.get_appointment_type_display()}' (Fällig: {current_appointment.due_date}) wurde erledigt."
+        )
         
         # 2. Prüfen, ob eine Wiedervorlage gewünscht ist
         create_followup = request.POST.get("create_followup") == "true"
@@ -517,6 +547,12 @@ def complete_and_reschedule(request, device_pk, appointment_pk):
                 appointment_type=current_appointment.appointment_type,
                 due_date=new_date,
                 completed=False
+            )
+
+            DeviceAuditLog.objects.create(
+                medical_device=device,
+                action="Folgetermin angelegt",
+                description=f"Wiedervorlage für '{current_appointment.get_appointment_type_display()}' am {new_date.strftime('%d.%m.%Y')} geplant."
             )
             
             type_name = current_appointment.get_appointment_type_display()
