@@ -394,4 +394,84 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="post" action="{% url 'documents' %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title" id="uploadDocumentModalLabel">Dokument hochladen</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" name="action" value="upload_document">
+          <input type="hidden" name="category" value="{{ device.category.id }}">
+          <input type="hidden" name="device" value="{{ device.id }}">
+          <input type="hidden" name="next" value="{{ request.path }}">
+          
+          <div class="mb-3">
+            <label for="upload_title" class="form-label">Titel</label>
+            <input type="text" class="form-control" name="title" id="upload_title" required placeholder="z.B. Bedienungsanleitung, STK-Protokoll">
+          </div>
+          <div class="mb-3">
+            <label for="upload_date" class="form-label">Dokumentendatum</label>
+            <input type="date" class="form-control" name="document_date" id="upload_date">
+          </div>
+
+          <!-- Drag & Drop Upload Area -->
+          <div class="mb-3">
+            <label class="form-label">Datei (PDF, Bilder, Word)</label>
+            <div id="dropZone" class="border border-2 border-dashed rounded p-4 text-center bg-light" style="cursor: pointer;">
+              <i class="fa-solid fa-cloud-arrow-up fa-2x text-muted mb-2"></i>
+              <p class="mb-1 small text-muted">Datei hierher ziehen oder klicken zum Auswählen</p>
+              <input type="file" name="file" id="fileInput" class="d-none" required accept=".pdf,.doc,.docx,.txt,.png,.jpg">
+              <div id="selectedFileName" class="small fw-bold text-success mt-2"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+          <button type="submit" class="btn btn-primary">Hochladen</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileNameDiv = document.getElementById('selectedFileName');
+
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-primary', 'bg-white');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-primary', 'bg-white');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-primary', 'bg-white');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileNameDiv.textContent = `Ausgewählt: ${e.dataTransfer.files[0].name}`;
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileNameDiv.textContent = `Ausgewählt: ${fileInput.files[0].name}`;
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
