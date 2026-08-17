@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from inventory.models import Category, Room, MedicalDevice, CategoryDocument, DeviceAppointment
+from inventory.models import Category, Room, MedicalDevice, CategoryDocument, DeviceAppointment, DeviceAuditLog
 
 
 class BackupEncoder(json.JSONEncoder):
@@ -44,6 +44,10 @@ def generate_backup_json() -> dict:
         'due_date', 'performed_date', 'note', 'completed', 'created_at'
     ))
 
+    audit_logs = list(DeviceAuditLog.objects.values(
+        'id', 'medical_device_id', 'action', 'description', 'created_at'
+    ))
+
     return {
         "version": "1.0",
         "exported_at": timezone.now().isoformat(),
@@ -52,6 +56,7 @@ def generate_backup_json() -> dict:
         "medical_devices": devices,
         "category_documents": documents,
         "device_appointments": appointments,
+        "device_audit_logs": audit_logs,
     }
 
 
@@ -108,6 +113,7 @@ def restore_backup_data(uploaded_file):
         raise ValueError("Ungültiges Backup-Format. Erforderliche Daten fehlen.")
 
     # Delete existing data
+    DeviceAuditLog.objects.all().delete()
     DeviceAppointment.objects.all().delete()
     CategoryDocument.objects.all().delete()
     MedicalDevice.objects.all().delete()
@@ -181,10 +187,21 @@ def restore_backup_data(uploaded_file):
                 completed=app_dict.get('completed', False),
             )
 
+    for log_dict in json_data.get("device_audit_logs", []):
+        dev_id = log_dict.get('medical_device_id')
+        if dev_id in device_map:
+            DeviceAuditLog.objects.create(
+                medical_device=device_map[dev_id],
+                action=log_dict['action'],
+                description=log_dict.get('description', ''),
+                created_at=log_dict.get('created_at', timezone.now()),
+            )
+
     return {
         "categories": len(category_map),
         "rooms": len(room_map),
         "devices": len(device_map),
         "documents": len(json_data.get("category_documents", [])),
         "appointments": len(json_data.get("device_appointments", [])),
+        "audit_logs": len(json_data.get("device_audit_logs", [])),
     }
