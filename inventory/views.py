@@ -136,11 +136,17 @@ class DashboardView(ListView):
         
         # KPI Metrics for Dashboard
         today = timezone.localdate()
+        allowed_reminder_types = [
+            "calibration",
+            "maintenance_mtk",
+            "maintenance_stk",
+            "maintenance_dguv3"
+        ]
         context["total_devices_count"] = MedicalDevice.objects.count()
         context["active_devices_count"] = MedicalDevice.objects.filter(activity_status=MedicalDevice.ActivityStatus.ACTIVE).count()
         context["defective_devices_count"] = MedicalDevice.objects.filter(functional_status=MedicalDevice.FunctionalStatus.DEFECTIVE).count()
-        context["overdue_appointments_count"] = DeviceAppointment.objects.filter(completed=False, due_date__lt=today).count()
-        context["due_soon_appointments_count"] = DeviceAppointment.objects.filter(completed=False, due_date__gte=today, due_date__lte=today + timedelta(days=30)).count()
+        context["overdue_appointments_count"] = DeviceAppointment.objects.filter(completed=False, appointment_type__in=allowed_reminder_types, due_date__lt=today).count()
+        context["due_soon_appointments_count"] = DeviceAppointment.objects.filter(completed=False, appointment_type__in=allowed_reminder_types, due_date__gte=today, due_date__lte=today + timedelta(days=30)).count()
 
         # 🚨 HIER DIE ZWEITE ÄNDERUNG: aktuellen Status für das Template übergeben
         context["activity_status"] = self.request.GET.get("activity_status", "active").strip()
@@ -191,11 +197,58 @@ class MedicalDeviceUpdateView(UpdateView):
         return reverse_lazy("device-detail", kwargs={"pk": self.object.pk})
 
     def form_valid(self, form):
+        old_instance = MedicalDevice.objects.get(pk=self.get_object().pk)
         response = super().form_valid(form)
+        
+        field_labels = {
+            "name": "Name des Geräts",
+            "category": "Kategorie",
+            "room": "Raum",
+            "activity_status": "Aktivitätsstatus",
+            "functional_status": "Funktionsstatus",
+            "serial_number": "Seriennummer",
+            "cohort_device_number": "Gerätenummer (Kohorte)",
+            "manufacturer": "Hersteller",
+            "delivery_date": "Lieferdatum",
+            "contact_data": "Kontaktdaten",
+            "notes": "Anmerkungen",
+        }
+        changes = []
+        for field, label in field_labels.items():
+            old_val = getattr(old_instance, field)
+            new_val = getattr(self.object, field)
+            
+            if field == "category":
+                old_str = str(old_val) if old_val else "-"
+                new_str = str(new_val) if new_val else "-"
+            elif field == "room":
+                old_str = old_val.name if old_val else "-"
+                new_str = new_val.name if new_val else "-"
+            elif field == "activity_status":
+                old_str = old_instance.get_activity_status_display()
+                new_str = self.object.get_activity_status_display()
+            elif field == "functional_status":
+                old_str = old_instance.get_functional_status_display()
+                new_str = self.object.get_functional_status_display()
+            elif field == "delivery_date":
+                old_str = old_val.strftime('%d.%m.%Y') if old_val else "-"
+                new_str = new_val.strftime('%d.%m.%Y') if new_val else "-"
+            else:
+                old_str = str(old_val) if old_val else "-"
+                new_str = str(new_val) if new_val else "-"
+                
+            if old_val != new_val:
+                changes.append(f"{label}: '{old_str}' → '{new_str}'")
+                
+        if changes:
+            desc = "Änderungen: " + ", ".join(changes)
+        else:
+            desc = f"Stammdaten von '{self.object.name}' wurden aktualisiert."
+            
         DeviceAuditLog.objects.create(
             medical_device=self.object,
             action="Gerät bearbeitet",
-            description=f"Stammdaten von '{self.object.name}' wurden aktualisiert."
+            description=desc
         )
         return response
 
@@ -292,10 +345,37 @@ class CategoryListCreateView(TemplateView):
         elif action == "update_category":
             try:
                 category = get_object_or_404(Category, pk=request.POST.get("category_id"))
+                old_name = category.name
+                old_dguv3 = category.dguv3_interval_months
+                old_mtk = category.mtk_interval_months
+                old_stk = category.stk_interval_months
+                old_cal = category.calibration_interval_months
+
                 form = CategoryForm(request.POST, instance=category, prefix=f"category_{category.pk}")
                 if form.is_valid():
-                    form.save()
+                    updated_cat = form.save()
                     messages.success(request, "Kategorie erfolgreich aktualisiert.")
+
+                    cat_changes = []
+                    if old_name != updated_cat.name:
+                        cat_changes.append(f"Name: '{old_name}' → '{updated_cat.name}'")
+                    if old_dguv3 != updated_cat.dguv3_interval_months:
+                        cat_changes.append(f"DGUV3-Intervall: {old_dguv3 or '-'} → {updated_cat.dguv3_interval_months or '-'} Monate")
+                    if old_mtk != updated_cat.mtk_interval_months:
+                        cat_changes.append(f"MTK-Intervall: {old_mtk or '-'} → {updated_cat.mtk_interval_months or '-'} Monate")
+                    if old_stk != updated_cat.stk_interval_months:
+                        cat_changes.append(f"STK-Intervall: {old_stk or '-'} → {updated_cat.stk_interval_months or '-'} Monate")
+                    if old_cal != updated_cat.calibration_interval_months:
+                        cat_changes.append(f"Kalibrierungsintervall: {old_cal or '-'} → {updated_cat.calibration_interval_months or '-'} Monate")
+
+                    if cat_changes:
+                        desc = f"Kategorie-Stammdaten aktualisiert: " + ", ".join(cat_changes)
+                        for dev in updated_cat.devices.all():
+                            DeviceAuditLog.objects.create(
+                                medical_device=dev,
+                                action="Kategorie-Stammdaten geändert",
+                                description=desc
+                            )
             except DatabaseError:
                 pass
 
@@ -397,6 +477,19 @@ class DocumentManagementView(TemplateView):
                 
                 # Wenn alles passt: Speichern!
                 document.save()
+                if document.device:
+                    DeviceAuditLog.objects.create(
+                        medical_device=document.device,
+                        action="Dokument hinzugefügt",
+                        description=f"Dokument '{document.title}' wurde hinzugefügt."
+                    )
+                else:
+                    for dev in document.category.devices.all():
+                        DeviceAuditLog.objects.create(
+                            medical_device=dev,
+                            action="Dokument hinzugefügt",
+                            description=f"Kategoriendokument '{document.title}' (Kategorie: {document.category.name}) wurde hinzugefügt."
+                        )
                 messages.success(request, "Dokument erfolgreich hochgeladen.")
             else:
                 # Standard-Formularfehler (z.B. falsches Dateiformat) abfangen
@@ -405,13 +498,31 @@ class DocumentManagementView(TemplateView):
                 
         elif action == "delete_document":
                 document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
+                doc_title = document.title
+                device = document.device
+                category = document.category
                 document.delete()
+
+                if device:
+                    DeviceAuditLog.objects.create(
+                        medical_device=device,
+                        action="Dokument gelöscht",
+                        description=f"Dokument '{doc_title}' wurde gelöscht."
+                    )
+                else:
+                    for dev in category.devices.all():
+                        DeviceAuditLog.objects.create(
+                            medical_device=dev,
+                            action="Dokument gelöscht",
+                            description=f"Kategoriendokument '{doc_title}' wurde gelöscht."
+                        )
                 messages.success(request, "Dokument erfolgreich gelöscht.")
                 # Leitet zurück zur Ursprungsseite
                 return redirect(request.POST.get("next", request.path_info))
 
         elif action == "edit_document":
             document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
+            old_title = document.title
             new_title = request.POST.get("title")
             new_date = request.POST.get("document_date")
             
@@ -421,6 +532,21 @@ class DocumentManagementView(TemplateView):
                 document.document_date = new_date
                 
             document.save()
+
+            desc = f"Dokument '{old_title}' wurde bearbeitet (neuer Titel: '{document.title}')."
+            if document.device:
+                DeviceAuditLog.objects.create(
+                    medical_device=document.device,
+                    action="Dokument bearbeitet",
+                    description=desc
+                )
+            else:
+                for dev in document.category.devices.all():
+                    DeviceAuditLog.objects.create(
+                        medical_device=dev,
+                        action="Dokument bearbeitet",
+                        description=desc
+                    )
             messages.success(request, "Dokument erfolgreich aktualisiert.")
             return redirect(request.POST.get("next", request.path_info))
             
@@ -435,7 +561,13 @@ class AppointmentCreateView(CreateView):
 
     def form_valid(self, form):
         form.instance.medical_device_id = self.kwargs["pk"]
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        DeviceAuditLog.objects.create(
+            medical_device=self.object.medical_device,
+            action="Termin erstellt",
+            description=f"Termin '{self.object.get_appointment_type_display()}' (Fällig: {self.object.due_date}) wurde erstellt."
+        )
+        return response
 
     def get_success_url(self):
         return reverse_lazy("device-detail", kwargs={"pk": self.kwargs["pk"]})
@@ -501,7 +633,15 @@ class ReminderArchiveView(ListView):
 class AppointmentDeleteView(View):
     def post(self, request, device_pk, appointment_pk):
         appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
+        app_type = appointment.get_appointment_type_display()
+        due_date = appointment.due_date
+        device = appointment.medical_device
         appointment.delete()
+        DeviceAuditLog.objects.create(
+            medical_device=device,
+            action="Termin gelöscht",
+            description=f"Termin '{app_type}' (Fällig: {due_date}) wurde gelöscht."
+        )
         return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
 
 
@@ -510,6 +650,12 @@ class AppointmentToggleCompleteView(View):
         appointment = get_object_or_404(DeviceAppointment, pk=appointment_pk, medical_device_id=device_pk)
         appointment.completed = not appointment.completed
         appointment.save(update_fields=["completed"])
+        status_str = "als erledigt" if appointment.completed else "wieder als offen"
+        DeviceAuditLog.objects.create(
+            medical_device=appointment.medical_device,
+            action="Termin-Status geändert",
+            description=f"Termin '{appointment.get_appointment_type_display()}' wurde {status_str} markiert."
+        )
         return HttpResponseRedirect(reverse_lazy("device-detail", kwargs={"pk": device_pk}))
     
 def complete_and_reschedule(request, device_pk, appointment_pk):
