@@ -17,7 +17,7 @@ from django.contrib import messages
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
 from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
-from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room
+from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room, DeviceAuditLog
 from .services.backup import create_export_file, restore_backup_data
 import json
 from django.core.serializers.json import DjangoJSONEncoder
