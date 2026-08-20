@@ -3,7 +3,7 @@ from datetime import date, timedelta, datetime
 
 from django.core.exceptions import PermissionDenied
 from django.utils.dateparse import parse_date
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 
 from django.http import HttpResponseRedirect
@@ -795,20 +795,32 @@ def export_backup_view(request):
 
 def import_backup_view(request):
     if request.method == "POST":
+        is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
         backup_file = request.FILES.get("backup_file")
         if not backup_file:
+            if is_ajax:
+                return JsonResponse({"status": "error", "message": "Bitte wähle eine Backup-Datei aus."}, status=400)
             messages.error(request, "Bitte wähle eine Backup-Datei aus.")
             return redirect('stammdaten')
         
         try:
             stats = restore_backup_data(backup_file)
-            messages.success(
-                request, 
+            msg = (
                 f"Backup erfolgreich eingespielt! Wiederhergestellt: "
                 f"{stats['categories']} Kategorien, {stats['rooms']} Räume, "
                 f"{stats['devices']} Geräte, {stats['documents']} Dokumente, {stats['appointments']} Termine."
             )
+            if is_ajax:
+                return JsonResponse({
+                    "status": "success",
+                    "message": msg,
+                    "stats": stats
+                })
+            messages.success(request, msg)
         except Exception as e:
-            messages.error(request, f"Fehler beim Wiederherstellen des Backups: {str(e)}")
+            err_msg = f"Fehler beim Wiederherstellen des Backups: {str(e)}"
+            if is_ajax:
+                return JsonResponse({"status": "error", "message": err_msg}, status=400)
+            messages.error(request, err_msg)
             
     return redirect('stammdaten')

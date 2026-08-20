@@ -113,7 +113,7 @@
           <!-- Import -->
           <div class="col-md-6">
             <h6 class="fw-bold mb-3"><i class="fa-solid fa-upload me-1 text-danger"></i>Daten wiederherstellen</h6>
-            <form method="post" action="{% url 'backup-import' %}" enctype="multipart/form-data" onsubmit="return confirm('ACHTUNG: Beim Einspielen eines Backups wird der gesamte aktuelle Datenstand (Geräte, Termine, Dokumente) überschrieben! Fortfahren?');">
+            <form id="backup-import-form" method="post" action="{% url 'backup-import' %}" enctype="multipart/form-data">
               {% csrf_token %}
               <div class="mb-3">
                 <input class="form-control form-control-sm" type="file" name="backup_file" accept=".json,.zip" required>
@@ -289,8 +289,133 @@
   }
 </style>
 
+<!-- Modal für Backup-Wiederherstellung -->
+<div class="modal fade" id="backupRestoreModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="backupRestoreModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-light border-bottom-0">
+        <h5 class="modal-title fw-bold" id="backupRestoreModalLabel">
+          <i class="fa-solid fa-database text-primary me-2"></i>Backup Wiederherstellung
+        </h5>
+      </div>
+      <div class="modal-body p-4 text-center">
+        <!-- Progress / Loading -->
+        <div id="backup-loading">
+          <div class="spinner-border text-primary my-3" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Lade...</span>
+          </div>
+          <h5 class="fw-bold mt-2">Backup wird eingespielt...</h5>
+          <p class="text-muted small mb-0">Bitte schließen oder aktualisieren Sie das Fenster nicht, während die Daten wiederhergestellt werden.</p>
+        </div>
+
+        <!-- Success -->
+        <div id="backup-success" class="d-none">
+          <div class="text-success mb-3">
+            <i class="fa-solid fa-circle-check fa-4x"></i>
+          </div>
+          <h5 class="fw-bold text-success mb-2">Backup erfolgreich eingespielt!</h5>
+          <p class="text-muted small mb-3">Die folgenden Daten wurden erfolgreich wiederhergestellt:</p>
+          <ul class="list-group list-group-flush text-start mb-4 small border rounded" id="backup-stats-list">
+            <!-- Dynamisch befüllt -->
+          </ul>
+          <button type="button" class="btn btn-primary px-4" onclick="location.reload();">
+            <i class="fa-solid fa-arrows-rotate me-2"></i>Seite neu laden
+          </button>
+        </div>
+
+        <!-- Error -->
+        <div id="backup-error" class="d-none">
+          <div class="text-danger mb-3">
+            <i class="fa-solid fa-circle-xmark fa-4x"></i>
+          </div>
+          <h5 class="fw-bold text-danger mb-2">Fehler beim Wiederherstellen</h5>
+          <p class="text-muted small mb-3" id="backup-error-message"></p>
+          <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+            Schließen
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
   (function () {
+    const importForm = document.getElementById("backup-import-form");
+    if (importForm) {
+      importForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const fileInput = importForm.querySelector('input[name="backup_file"]');
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+          alert("Bitte wählen Sie eine Backup-Datei aus.");
+          return;
+        }
+
+        const confirmed = confirm(
+          "ACHTUNG: Beim Einspielen eines Backups wird der gesamte aktuelle Datenstand (Geräte, Termine, Dokumente) überschrieben! Fortfahren?"
+        );
+        if (!confirmed) {
+          return;
+        }
+
+        const modalElement = document.getElementById("backupRestoreModal");
+        const modal = new bootstrap.Modal(modalElement);
+        
+        const loadingDiv = document.getElementById("backup-loading");
+        const successDiv = document.getElementById("backup-success");
+        const errorDiv = document.getElementById("backup-error");
+        const statsList = document.getElementById("backup-stats-list");
+        const errorMessage = document.getElementById("backup-error-message");
+
+        // Reset states
+        loadingDiv.classList.remove("d-none");
+        successDiv.classList.add("d-none");
+        errorDiv.classList.add("d-none");
+
+        modal.show();
+
+        const formData = new FormData(importForm);
+
+        fetch(importForm.action, {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest"
+          }
+        })
+          .then(async (response) => {
+            const data = await response.json().catch(() => ({}));
+            if (response.ok && data.status === "success") {
+              loadingDiv.classList.add("d-none");
+              
+              if (data.stats) {
+                statsList.innerHTML = `
+                  <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa-solid fa-tags me-2 text-primary"></i>Kategorien</span><span class="badge bg-primary rounded-pill">${data.stats.categories || 0}</span></li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa-solid fa-door-open me-2 text-primary"></i>Räume</span><span class="badge bg-primary rounded-pill">${data.stats.rooms || 0}</span></li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa-solid fa-stethoscope me-2 text-primary"></i>Geräte</span><span class="badge bg-primary rounded-pill">${data.stats.devices || 0}</span></li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa-solid fa-file me-2 text-primary"></i>Dokumente</span><span class="badge bg-primary rounded-pill">${data.stats.documents || 0}</span></li>
+                  <li class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa-solid fa-calendar me-2 text-primary"></i>Termine</span><span class="badge bg-primary rounded-pill">${data.stats.appointments || 0}</span></li>
+                `;
+              } else {
+                statsList.innerHTML = `<li class="list-group-item text-muted">${data.message || 'Wiederherstellung abgeschlossen.'}</li>`;
+              }
+              
+              successDiv.classList.remove("d-none");
+            } else {
+              loadingDiv.classList.add("d-none");
+              errorMessage.textContent = data.message || "Es ist ein Fehler beim Importieren aufgetreten.";
+              errorDiv.classList.remove("d-none");
+            }
+          })
+          .catch((err) => {
+            loadingDiv.classList.add("d-none");
+            errorMessage.textContent = "Netzwerkfehler: Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.";
+            errorDiv.classList.remove("d-none");
+          });
+      });
+    }
+
     const form = document.getElementById("category-create-form");
     if (!form) return;
 
