@@ -122,6 +122,8 @@ def restore_backup_data(uploaded_file):
 
     category_map = {}
     for cat_dict in json_data.get("categories", []):
+        if not isinstance(cat_dict, dict) or 'name' not in cat_dict:
+            raise ValueError("Ungültiges Backup: Eine Kategorie hat keinen Namen ('name' fehlt).")
         old_id = cat_dict.get('id')
         cat = Category.objects.create(
             name=cat_dict['name'],
@@ -135,6 +137,8 @@ def restore_backup_data(uploaded_file):
 
     room_map = {}
     for room_dict in json_data.get("rooms", []):
+        if not isinstance(room_dict, dict) or 'name' not in room_dict:
+            raise ValueError("Ungültiges Backup: Ein Raum hat keinen Namen ('name' fehlt).")
         old_id = room_dict.get('id')
         room = Room.objects.create(
             name=room_dict['name'],
@@ -144,10 +148,15 @@ def restore_backup_data(uploaded_file):
 
     device_map = {}
     for dev_dict in json_data.get("medical_devices", []):
+        if not isinstance(dev_dict, dict) or 'name' not in dev_dict or 'serial_number' not in dev_dict or 'category_id' not in dev_dict:
+            raise ValueError("Ungültiges Backup: Ein medizinisches Gerät hat keinen Namen, keine Seriennummer oder keine Kategorie-ID.")
         old_id = dev_dict.get('id')
         cat_id = dev_dict.get('category_id')
         rm_id = dev_dict.get('room_id')
         
+        if cat_id not in category_map:
+            raise ValueError(f"Ungültiges Backup: Gerät '{dev_dict.get('name')}' verweist auf nicht existierende Kategorie-ID {cat_id}.")
+
         device = MedicalDevice.objects.create(
             name=dev_dict['name'],
             category=category_map[cat_id],
@@ -164,9 +173,14 @@ def restore_backup_data(uploaded_file):
         device_map[old_id] = device
 
     for doc_dict in json_data.get("category_documents", []):
+        if not isinstance(doc_dict, dict) or 'title' not in doc_dict or 'category_id' not in doc_dict:
+            raise ValueError("Ungültiges Backup: Ein Dokument hat keinen Titel oder keine Kategorie-ID.")
         cat_id = doc_dict.get('category_id')
         dev_id = doc_dict.get('device_id')
         
+        if cat_id not in category_map:
+            continue
+
         CategoryDocument.objects.create(
             category=category_map[cat_id],
             device=device_map.get(dev_id) if dev_id else None,
@@ -176,6 +190,8 @@ def restore_backup_data(uploaded_file):
         )
 
     for app_dict in json_data.get("device_appointments", []):
+        if not isinstance(app_dict, dict) or 'appointment_type' not in app_dict:
+            raise ValueError("Ungültiges Backup: Ein Termin hat keinen Typ ('appointment_type' fehlt).")
         dev_id = app_dict.get('medical_device_id')
         if dev_id in device_map:
             DeviceAppointment.objects.create(
@@ -188,6 +204,8 @@ def restore_backup_data(uploaded_file):
             )
 
     for log_dict in json_data.get("device_audit_logs", []):
+        if not isinstance(log_dict, dict) or 'action' not in log_dict:
+            continue
         dev_id = log_dict.get('medical_device_id')
         if dev_id in device_map:
             DeviceAuditLog.objects.create(
