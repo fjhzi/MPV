@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from inventory.models import Category, Room, MedicalDevice, CategoryDocument, DeviceAppointment, DeviceAuditLog
+from inventory.models import Category, Room, MedicalDevice, DeviceAppointment, DeviceAuditLog
 
 
 class BackupEncoder(json.JSONEncoder):
@@ -34,14 +34,9 @@ def generate_backup_json() -> dict:
         'created_at', 'updated_at'
     ))
     
-    documents = list(CategoryDocument.objects.values(
-        'id', 'category_id', 'device_id', 'title',
-        'document_date', 'file', 'uploaded_at'
-    ))
-    
     appointments = list(DeviceAppointment.objects.values(
         'id', 'medical_device_id', 'appointment_type',
-        'due_date', 'performed_date', 'note', 'completed', 'created_at'
+        'due_date', 'performed_date', 'note', 'file', 'completed', 'created_at'
     ))
 
     audit_logs = list(DeviceAuditLog.objects.values(
@@ -54,7 +49,6 @@ def generate_backup_json() -> dict:
         "categories": categories,
         "rooms": rooms,
         "medical_devices": devices,
-        "category_documents": documents,
         "device_appointments": appointments,
         "device_audit_logs": audit_logs,
     }
@@ -72,8 +66,8 @@ def create_export_file(include_files=False):
     with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
         zf.writestr('backup.json', json_bytes)
         
-        for doc in data['category_documents']:
-            file_rel_path = doc.get('file')
+        for app in data['device_appointments']:
+            file_rel_path = app.get('file')
             if file_rel_path:
                 full_path = os.path.join(settings.MEDIA_ROOT, file_rel_path)
                 if os.path.isfile(full_path):
@@ -115,7 +109,6 @@ def restore_backup_data(uploaded_file):
     # Delete existing data
     DeviceAuditLog.objects.all().delete()
     DeviceAppointment.objects.all().delete()
-    CategoryDocument.objects.all().delete()
     MedicalDevice.objects.all().delete()
     Room.objects.all().delete()
     Category.objects.all().delete()
@@ -172,23 +165,6 @@ def restore_backup_data(uploaded_file):
         )
         device_map[old_id] = device
 
-    for doc_dict in json_data.get("category_documents", []):
-        if not isinstance(doc_dict, dict) or 'title' not in doc_dict or 'category_id' not in doc_dict:
-            raise ValueError("Ungültiges Backup: Ein Dokument hat keinen Titel oder keine Kategorie-ID.")
-        cat_id = doc_dict.get('category_id')
-        dev_id = doc_dict.get('device_id')
-        
-        if cat_id not in category_map:
-            continue
-
-        CategoryDocument.objects.create(
-            category=category_map[cat_id],
-            device=device_map.get(dev_id) if dev_id else None,
-            title=doc_dict['title'],
-            document_date=doc_dict.get('document_date'),
-            file=doc_dict.get('file', ''),
-        )
-
     for app_dict in json_data.get("device_appointments", []):
         if not isinstance(app_dict, dict) or 'appointment_type' not in app_dict:
             raise ValueError("Ungültiges Backup: Ein Termin hat keinen Typ ('appointment_type' fehlt).")
@@ -200,6 +176,7 @@ def restore_backup_data(uploaded_file):
                 due_date=app_dict['due_date'],
                 performed_date=app_dict.get('performed_date'),
                 note=app_dict.get('note', ''),
+                file=app_dict.get('file', ''),
                 completed=app_dict.get('completed', False),
             )
 
@@ -219,7 +196,7 @@ def restore_backup_data(uploaded_file):
         "categories": len(category_map),
         "rooms": len(room_map),
         "devices": len(device_map),
-        "documents": len(json_data.get("category_documents", [])),
+        "documents": sum(1 for a in json_data.get("device_appointments", []) if a.get('file')),
         "appointments": len(json_data.get("device_appointments", [])),
         "audit_logs": len(json_data.get("device_audit_logs", [])),
     }

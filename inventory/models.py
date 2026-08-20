@@ -1,5 +1,6 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
+from django.utils import timezone
 
 
 class Category(models.Model):
@@ -58,33 +59,6 @@ class MedicalDevice(models.Model):
         return f"{self.name} ({self.serial_number})"
 
 
-class CategoryDocument(models.Model):
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="documents")
-    device = models.ForeignKey(
-        MedicalDevice, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
-        related_name="documents",
-        verbose_name="Spezifisches Gerät"
-    )
-    title = models.CharField(max_length=200)
-    document_date = models.DateField(null=True, blank=True)
-    file = models.FileField(
-        upload_to="category_documents/",
-        validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx", "txt", "png", "jpg"])],
-    )
-    uploaded_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        ordering = ["-uploaded_at"]
-
-    def __str__(self) -> str:
-        return self.title
-    
-from django.db import models
-from django.utils import timezone
-
 class DeviceAppointment(models.Model):
     class AppointmentType(models.TextChoices):
         # Bestehende Keys (Wichtig für deine JS-Logik!)
@@ -112,6 +86,13 @@ class DeviceAppointment(models.Model):
     performed_date = models.DateField(null=True, blank=True, verbose_name="Durchgeführt am")
     
     note = models.TextField(blank=True)
+    file = models.FileField(
+        upload_to="appointment_documents/",
+        validators=[FileExtensionValidator(allowed_extensions=["pdf", "doc", "docx", "txt", "png", "jpg"])],
+        null=True,
+        blank=True,
+        verbose_name="Dokument"
+    )
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

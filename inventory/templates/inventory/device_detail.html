@@ -10,8 +10,10 @@
   </div>
 </div>
 
+<!-- ========================================== -->
+<!-- ROW 1: Gerätedetails & Verlauf/Audit-Log   -->
+<!-- ========================================== -->
 <div class="row g-3 mb-4">
-  
   <div class="col-lg-6">
     <div class="card h-100 shadow-sm">
       <div class="card-header py-3 d-flex align-items-center">
@@ -36,77 +38,39 @@
     </div>
   </div>
 
+  <!-- Audit Log / Verlauf -->
   <div class="col-lg-6">
-    <div class="card h-100 shadow-sm">
-      <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h3 class="h6 fw-bold mb-0">
-          <i class="fa-solid fa-file-lines me-2"></i>Dokumente
-        </h3>
-        <button type="button" class="btn btn-sm btn-save" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
-          <i class="fa-solid fa-plus me-1"></i> Hinzufügen
-        </button>
-      </div>
-      
-      <div class="card-body p-0">
-        <ul class="list-group list-group-flush">
-          {% for doc in category_documents %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <div class="d-flex align-items-center mb-1">
-                  <i class="fa-solid fa-file-pdf text-danger me-2"></i>
-                  <span class="badge text-bg-light">{{ doc.document_date|date:'d.m.Y'}}</span>
-                  {% if doc.device %}
-                    <span class="badge bg-info text-dark ms-1">Gerätedokument</span>
-                  {% else %}
-                    <span class="badge bg-light text-dark ms-1">Kategoriedokument</span>
-                  {% endif %}
-                </div>
-                <div>
-                  <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="text-decoration-none fw-medium">
-                    {{ doc.title }}
-                  </a>
-                </div>
-              </div>
-
-              <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-edit" 
-                        data-bs-toggle="modal" data-bs-target="#editDocumentModal"
-                        data-doc-id="{{ doc.id }}" 
-                        data-doc-title="{{ doc.title }}" 
-                        data-doc-date="{{ doc.document_date|date:'Y-m-d' }}"
-                        aria-label="Bearbeiten" title="Bearbeiten">
-                    <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
-                </button>
-                {% if request.user.is_staff %}
-                <form method="post" action="{% url 'documents' %}" class="m-0" onsubmit="return confirm('Dokument wirklich löschen?');">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_document">
-                    <input type="hidden" name="document_id" value="{{ doc.id }}">
-                    <input type="hidden" name="next" value="{{ request.path }}">
-                    <button class="btn btn-sm btn-delete" type="submit" aria-label="Löschen" title="Löschen">
-                        <i class="fa-solid fa-trash" aria-hidden="true"></i>
-                    </button>
-                </form>
-                {% endif %}
-              </div>
-            </li>
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h6 fw-bold mb-0">
+            <i class="fa-solid fa-shield-halved me-2"></i>Verlauf & Audit-Log
+          </h3>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#auditLogModal" title="Audit-Log in Vollansicht öffnen">
+            <i class="fa-solid fa-expand me-1"></i> Vergrößern
+          </button>
+        </div>
+        <div class="timeline flex-grow-1" style="max-height: 320px; overflow-y: auto;">
+          {% for log in audit_logs %}
+            <div class="mb-3 border-bottom pb-2">
+              <div class="small fw-bold text-primary">{{ log.action }}</div>
+              <div class="small text-dark">{{ log.description }}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">{{ log.created_at|date:"d.m.Y H:i" }} Uhr</div>
+            </div>
           {% empty %}
-            <li class="list-group-item text-muted py-3 text-center">
-              Bisher keine Dokumente für dieses Gerät oder diese Kategorie hinterlegt.
-            </li>
+            <div class="text-muted small text-center py-3">Keine Protokolleintrüge vorhanden.</div>
           {% endfor %}
-        </ul>
+        </div>
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- ========================================== -->
-<!-- HISTORIE & PLANUNG (inkl. Add Button)      -->
+<!-- ROW 2: HISTORIE & PLANUNG (Volle Breite)   -->
 <!-- ========================================== -->
-<div class="row g-3 mt-2">
-  <div class="col-lg-8">
+<div class="row g-3 mb-4">
+  <div class="col-12">
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
@@ -133,7 +97,7 @@
           {% else %}
 
             {% for item in appointments %}
-              <div class="list-group-item d-flex align-items-center gap-2 py-1 px-2 mb-1 rounded-3 border {% if item.completed %}bg-light text-muted opacity-75{% else %}bg-white shadow-sm{% endif %}">
+              <div class="list-group-item d-flex align-items-center gap-2 py-2 px-3 mb-1 rounded-3 border {% if item.completed %}bg-light text-muted opacity-75{% else %}bg-white shadow-sm{% endif %}">
                 
                 <div style="min-width: 32px;" class="flex-shrink-0 d-flex justify-content-center">
                   {% if item.completed %}
@@ -164,7 +128,7 @@
                     {{ item.get_appointment_type_display }}
                   </div>
                   
-                  <div class="col-12 col-md-3 {% if not item.completed %}text-primary fw-medium{% endif %}">
+                  <div class="col-12 col-md-2 {% if not item.completed %}text-primary fw-medium{% endif %}">
                     {% if item.completed %}
                       {% if item.performed_date %}{{ item.performed_date|date:"d.m.Y" }}{% else %}{{ item.due_date|date:"d.m.Y" }}{% endif %}
                     {% else %}
@@ -172,10 +136,19 @@
                     {% endif %}
                   </div>
                   
-                  <div class="col-12 col-md-6 small text-truncate {% if not item.completed %}text-secondary{% endif %}" title="{{ item.note }}">
+                  <div class="col-12 col-md-5 small text-truncate {% if not item.completed %}text-secondary{% endif %}" title="{{ item.note }}">
                     {{ item.note|default:"-" }}
                   </div>
+
+                  <div class="col-12 col-md-2 text-md-end">
+                    {% if item.file %}
+                      <a href="{{ item.file.url }}" target="_blank" rel="noopener" class="badge text-bg-danger text-decoration-none py-2 px-2" title="Dokument / Prüfprotokoll öffnen">
+                        <i class="fa-solid fa-file-pdf me-1"></i> Protokoll
+                      </a>
+                    {% endif %}
+                  </div>
                 </div>
+
                 {% if request.user.is_staff %}
                 <form method="post" action="{% url 'appointment-delete' device.pk item.pk %}" class="m-0 flex-shrink-0">
                   {% csrf_token %}
@@ -188,28 +161,6 @@
               </div>
             {% endfor %}
           {% endif %}
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Audit Log / Verlauf -->
-  <div class="col-lg-4">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <h3 class="h6 fw-bold mb-3">
-          <i class="fa-solid fa-shield-halved me-2"></i>Verlauf & Audit-Log
-        </h3>
-        <div class="timeline" style="max-height: 350px; overflow-y: auto;">
-          {% for log in audit_logs %}
-            <div class="mb-3 border-bottom pb-2">
-              <div class="small fw-bold text-primary">{{ log.action }}</div>
-              <div class="small text-dark">{{ log.description }}</div>
-              <div class="text-muted" style="font-size: 0.75rem;">{{ log.created_at|date:"d.m.Y H:i" }} Uhr</div>
-            </div>
-          {% empty %}
-            <div class="text-muted small text-center py-3">Keine Protokolleintrüge vorhanden.</div>
-          {% endfor %}
         </div>
       </div>
     </div>
@@ -229,7 +180,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
       </div>
       <div class="modal-body bg-white pb-2">
-        <form id="addEntryForm" method="post" action="{% url 'appointment-create' device.pk %}">
+        <form id="addEntryForm" method="post" action="{% url 'appointment-create' device.pk %}" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="mb-3">
             <label class="form-label text-muted small mb-1 fw-bold text-uppercase">Art des Eintrags</label>
@@ -242,6 +193,10 @@
           <div class="mb-3">
             <label class="form-label text-muted small mb-1 fw-bold text-uppercase">Notiz / Details</label>
             {{ appointment_form.note }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted small mb-1 fw-bold text-uppercase">Dokument / Prüfprotokoll (optional)</label>
+            {{ appointment_form.file }}
           </div>
           <!-- Bereich wird per JS ein-/ausgeblendet -->
           <div id="completedSwitchContainer" class="mb-2 p-3 bg-light rounded-3 border">
@@ -310,6 +265,38 @@
   </div>
 </div>
 
+<!-- ========================================== -->
+<!-- MODAL: VOLLBILD AUDIT-LOG                  -->
+<!-- ========================================== -->
+<div class="modal fade" id="auditLogModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-light border-bottom-0">
+        <h5 class="modal-title fw-bold">
+          <i class="fa-solid fa-shield-halved text-primary me-2"></i>Vollständiger Verlauf & Audit-Log
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
+      </div>
+      <div class="modal-body bg-white">
+        <div class="timeline">
+          {% for log in audit_logs %}
+            <div class="mb-3 border-bottom pb-2">
+              <div class="small fw-bold text-primary">{{ log.action }}</div>
+              <div class="small text-dark">{{ log.description }}</div>
+              <div class="text-muted" style="font-size: 0.75rem;">{{ log.created_at|date:"d.m.Y H:i" }} Uhr</div>
+            </div>
+          {% empty %}
+            <div class="text-muted small text-center py-3">Keine Protokolleintrüge vorhanden.</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer bg-light border-top-0">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Schließen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // --- LOGIK FÜR DAS "NEUEN EINTRAG" MODAL ---
 document.addEventListener('DOMContentLoaded', function() {
@@ -324,7 +311,6 @@ document.addEventListener('DOMContentLoaded', function() {
             switchContainer.classList.remove('d-none');
         } else {
             switchContainer.classList.add('d-none');
-            // Optional: Checkbox beim Ausblenden zurücksetzen
             const checkbox = switchContainer.querySelector('input[type="checkbox"]');
             if (checkbox) checkbox.checked = false;
         }
@@ -332,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (typeSelect) {
         typeSelect.addEventListener('change', toggleSwitchVisibility);
-        toggleSwitchVisibility(); // Initialer Check beim Laden
+        toggleSwitchVisibility();
     }
 });
 
@@ -370,134 +356,5 @@ function showStep2() {
     document.getElementById('modalStep2').classList.remove('d-none');
     document.getElementById('createFollowupField').value = 'true';
 }
-</script>
-<div class="modal fade" id="editDocumentModal" tabindex="-1" aria-labelledby="editDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="post" action="{% url 'documents' %}">
-      {% csrf_token %}
-      <div class="modal-content">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title" id="editDocumentModalLabel">Dokument bearbeiten</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="action" value="edit_document">
-          <input type="hidden" name="document_id" id="edit_document_id">
-          <input type="hidden" name="next" value="{{ request.path }}">
-          
-          <div class="mb-3">
-            <label for="edit_document_title" class="form-label">Titel</label>
-            <input type="text" class="form-control" name="title" id="edit_document_title" required>
-          </div>
-          <div class="mb-3">
-            <label for="edit_document_date" class="form-label">Datum</label>
-            <input type="date" class="form-control" name="document_date" id="edit_document_date" required>
-          </div>
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-          <button type="submit" class="btn btn-primary">Speichern</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const editDocumentModal = document.getElementById('editDocumentModal');
-    if (editDocumentModal) {
-        editDocumentModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const docId = button.getAttribute('data-doc-id');
-            const docTitle = button.getAttribute('data-doc-title');
-            const docDate = button.getAttribute('data-doc-date');
-
-            editDocumentModal.querySelector('#edit_document_id').value = docId;
-            editDocumentModal.querySelector('#edit_document_title').value = docTitle;
-            editDocumentModal.querySelector('#edit_document_date').value = docDate;
-        });
-    }
-});
-</script>
-
-<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <form method="post" action="{% url 'documents' %}" enctype="multipart/form-data">
-      {% csrf_token %}
-      <div class="modal-content">
-        <div class="modal-header border-0 pb-0">
-          <h5 class="modal-title" id="uploadDocumentModalLabel">Dokument hochladen</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
-        </div>
-        <div class="modal-body">
-          <input type="hidden" name="action" value="upload_document">
-          <input type="hidden" name="category" value="{{ device.category.id }}">
-          <input type="hidden" name="device" value="{{ device.id }}">
-          <input type="hidden" name="next" value="{{ request.path }}">
-          
-          <div class="mb-3">
-            <label for="upload_title" class="form-label">Titel</label>
-            <input type="text" class="form-control" name="title" id="upload_title" required placeholder="z.B. Bedienungsanleitung, STK-Protokoll">
-          </div>
-          <div class="mb-3">
-            <label for="upload_date" class="form-label">Dokumentendatum</label>
-            <input type="date" class="form-control" name="document_date" id="upload_date">
-          </div>
-
-          <!-- Drag & Drop Upload Area -->
-          <div class="mb-3">
-            <label class="form-label">Datei (PDF, Bilder, Word)</label>
-            <div id="dropZone" class="border border-2 border-dashed rounded p-4 text-center bg-light" style="cursor: pointer;">
-              <i class="fa-solid fa-cloud-arrow-up fa-2x text-muted mb-2"></i>
-              <p class="mb-1 small text-muted">Datei hierher ziehen oder klicken zum Auswählen</p>
-              <input type="file" name="file" id="fileInput" class="d-none" required accept=".pdf,.doc,.docx,.txt,.png,.jpg">
-              <div id="selectedFileName" class="small fw-bold text-success mt-2"></div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer border-0">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-          <button type="submit" class="btn btn-primary">Hochladen</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const fileNameDiv = document.getElementById('selectedFileName');
-
-    if (dropZone && fileInput) {
-        dropZone.addEventListener('click', () => fileInput.click());
-        
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('border-primary', 'bg-white');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('border-primary', 'bg-white');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('border-primary', 'bg-white');
-            if (e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                fileNameDiv.textContent = `Ausgewählt: ${e.dataTransfer.files[0].name}`;
-            }
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileNameDiv.textContent = `Ausgewählt: ${fileInput.files[0].name}`;
-            }
-        });
-    }
-});
 </script>
 {% endblock %}

@@ -16,8 +16,8 @@ from django.utils import timezone
 from django.contrib import messages
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, TemplateView, UpdateView, View
 
-from .forms import CategoryDocumentForm, CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
-from .models import Category, CategoryDocument, DeviceAppointment,  MedicalDevice, Room, DeviceAuditLog
+from .forms import CategoryForm, DeviceAppointmentForm, MedicalDeviceForm, RoomForm
+from .models import Category, DeviceAppointment,  MedicalDevice, Room, DeviceAuditLog
 from .services.backup import create_export_file, restore_backup_data
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -293,16 +293,7 @@ class MedicalDeviceDetailView(DetailView):
             context=context,
         )
         
-        # 2. Context befüllen (history_items fällt komplett weg!)
         context["appointment_form"] = DeviceAppointmentForm()
-        
-        # 🚨 HIER IST DIE MAGIE: 
-        # Wir nehmen alle Dokumente der Kategorie, aber filtern sie so, 
-        # dass nur die ohne spezifisches Gerät (isnull=True) 
-        # ODER die für genau dieses Gerät (device=self.object) übrig bleiben!
-        context["category_documents"] = self.object.category.documents.filter(
-            Q(device__isnull=True) | Q(device=self.object)
-        ).order_by('-document_date')
 
         return context
 
@@ -422,139 +413,6 @@ class CategoryListCreateView(TemplateView):
                     
         return self.get(request, *args, **kwargs)
 
-class DocumentManagementView(TemplateView):
-    template_name = "inventory/documents.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Formular nur initialisieren, wenn es nicht schon durch einen Fehler im POST-Request übergeben wurde
-        if "document_form" not in context:
-            context["document_form"] = CategoryDocumentForm()
-            
-        try:
-            context["categories"] = Category.objects.only("id", "name").prefetch_related("documents")
-            context["categories_schema_unavailable"] = False
-        except DatabaseError:
-            context["categories"] = []
-            context["categories_schema_unavailable"] = True
-
-        # NEU: Geräte laden (jetzt inkl. Seriennummer!)
-        devices = MedicalDevice.objects.only('id', 'name', 'serial_number', 'category_id')
-        devices_map = {}
-        for dev in devices:
-            cat_id = str(dev.category_id)
-            if cat_id not in devices_map:
-                devices_map[cat_id] = []
-            
-            # Wir zeigen die Seriennummer an. Falls diese bei einem Gerät mal leer sein sollte, 
-            # nutzen wir als Fallback den normalen Namen.
-            # (Alternativ könntest du auch f"{dev.serial_number} - {dev.name}" nutzen)
-            display_name = dev.serial_number if dev.serial_number else dev.name
-            
-            devices_map[cat_id].append({'id': dev.id, 'name': display_name})
-            
-        context['devices_by_category_json'] = json.dumps(devices_map, cls=DjangoJSONEncoder)
-
-        return context
-
-    def post(self, request, *args, **kwargs):
-        action = request.POST.get("action")
-        
-        if action == "upload_document":
-            form = CategoryDocumentForm(request.POST, request.FILES)
-            if form.is_valid():
-                # commit=False speichert das Objekt noch nicht in der DB, 
-                # gibt uns aber die Instanz zum Überprüfen
-                document = form.save(commit=False)
-                
-                # 🚨 SECURITY CHECK (Fehlersicherheit)
-                # Jemand könnte im Frontend per Dev-Tools ein Gerät einer falschen Kategorie unterschieben.
-                if document.device and document.device.category != document.category:
-                    messages.error(request, "Sicherheitsverletzung: Das gewählte Gerät gehört nicht zur angegebenen Kategorie.")
-                    # Seite neu laden und das Formular MIT den Fehlern anzeigen
-                    return self.render_to_response(self.get_context_data(document_form=form))
-                
-                # Wenn alles passt: Speichern!
-                document.save()
-                if document.device:
-                    DeviceAuditLog.objects.create(
-                        medical_device=document.device,
-                        action="Dokument hinzugefügt",
-                        description=f"Dokument '{document.title}' wurde hinzugefügt."
-                    )
-                else:
-                    for dev in document.category.devices.all():
-                        DeviceAuditLog.objects.create(
-                            medical_device=dev,
-                            action="Dokument hinzugefügt",
-                            description=f"Kategoriendokument '{document.title}' (Kategorie: {document.category.name}) wurde hinzugefügt."
-                        )
-                messages.success(request, "Dokument erfolgreich hochgeladen.")
-            else:
-                # Standard-Formularfehler (z.B. falsches Dateiformat) abfangen
-                messages.error(request, "Bitte korrigiere die Fehler im Formular.")
-                return self.render_to_response(self.get_context_data(document_form=form))
-                
-        elif action == "delete_document":
-                document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
-                doc_title = document.title
-                device = document.device
-                category = document.category
-                document.delete()
-
-                if device:
-                    DeviceAuditLog.objects.create(
-                        medical_device=device,
-                        action="Dokument gelöscht",
-                        description=f"Dokument '{doc_title}' wurde gelöscht."
-                    )
-                else:
-                    for dev in category.devices.all():
-                        DeviceAuditLog.objects.create(
-                            medical_device=dev,
-                            action="Dokument gelöscht",
-                            description=f"Kategoriendokument '{doc_title}' wurde gelöscht."
-                        )
-                messages.success(request, "Dokument erfolgreich gelöscht.")
-                # Leitet zurück zur Ursprungsseite
-                return redirect(request.POST.get("next", request.path_info))
-
-        elif action == "edit_document":
-            document = get_object_or_404(CategoryDocument, pk=request.POST.get("document_id"))
-            old_title = document.title
-            new_title = request.POST.get("title")
-            new_date = request.POST.get("document_date")
-            
-            if new_title:
-                document.title = new_title
-            if new_date:
-                document.document_date = new_date
-                
-            document.save()
-
-            desc = f"Dokument '{old_title}' wurde bearbeitet (neuer Titel: '{document.title}')."
-            if document.device:
-                DeviceAuditLog.objects.create(
-                    medical_device=document.device,
-                    action="Dokument bearbeitet",
-                    description=desc
-                )
-            else:
-                for dev in document.category.devices.all():
-                    DeviceAuditLog.objects.create(
-                        medical_device=dev,
-                        action="Dokument bearbeitet",
-                        description=desc
-                    )
-            messages.success(request, "Dokument erfolgreich aktualisiert.")
-            return redirect(request.POST.get("next", request.path_info))
-            
-        # Post/Redirect/Get-Pattern: Verhindert, dass beim Neuladen der Seite (F5) 
-        # das Formular erneut abgeschickt wird. (Alternativ kannst du auch bei deinem self.get() bleiben)
-        return redirect(request.path_info)
-
-
 class AppointmentCreateView(CreateView):
     model = DeviceAppointment
     form_class = DeviceAppointmentForm
@@ -562,10 +420,11 @@ class AppointmentCreateView(CreateView):
     def form_valid(self, form):
         form.instance.medical_device_id = self.kwargs["pk"]
         response = super().form_valid(form)
+        doc_str = f" mit Dokument '{self.object.file.name.split('/')[-1]}'" if self.object.file else ""
         DeviceAuditLog.objects.create(
             medical_device=self.object.medical_device,
-            action="Termin erstellt",
-            description=f"Termin '{self.object.get_appointment_type_display()}' (Fällig: {self.object.due_date}) wurde erstellt."
+            action="Termin/Ereignis erstellt",
+            description=f"Eintrag '{self.object.get_appointment_type_display()}' (Fällig: {self.object.due_date}){doc_str} wurde erstellt."
         )
         return response
 

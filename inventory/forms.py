@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Category, CategoryDocument, DeviceAppointment, MedicalDevice, Room
+from .models import Category, DeviceAppointment, MedicalDevice, Room
 
 
 class DateInput(forms.DateInput):
@@ -97,27 +97,13 @@ class RoomForm(forms.ModelForm):
 class DeviceAppointmentForm(forms.ModelForm):
     class Meta:
         model = DeviceAppointment
-        fields = ["appointment_type", "due_date", "note", "completed"]
+        fields = ["appointment_type", "due_date", "note", "completed", "file"]
         widgets = {
             "due_date": forms.DateInput(attrs={"type": "date"}),
             "note": forms.TextInput(attrs={"placeholder": "Kurze Notiz..."}),
             "completed": forms.CheckboxInput(attrs={"class": "form-check-input cursor-pointer", "role": "switch"}),
-        }
-
-class CategoryDocumentForm(forms.ModelForm):
-    class Meta:
-        model = CategoryDocument
-        # NEU: "device" in die fields aufgenommen
-        fields = ["category", "device", "title", "document_date", "file"] 
-        widgets = {
-            "category": forms.Select(attrs={"class": "form-select"}),
-            # NEU: Widget für das device Dropdown
-            "device": forms.Select(attrs={"class": "form-select"}), 
-            "title": forms.TextInput(attrs={"class": "form-control"}),
-            "document_date": forms.DateInput(attrs={"type": "date"}),
             "file": forms.ClearableFileInput(attrs={"class": "form-control"}),
         }
-        # OPTIONAL: Ein schönes Label für das Frontend definieren
         labels = {
-            "device": "Gerät (Optional)"
+            "file": "Dokument (optional)",
         }

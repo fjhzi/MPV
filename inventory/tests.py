@@ -5,7 +5,7 @@ from django.test import Client, TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 
-from .models import Category, CategoryDocument, DeviceAppointment, DeviceAuditLog, MedicalDevice, Room
+from .models import Category, DeviceAppointment, DeviceAuditLog, MedicalDevice, Room
 from .views import MedicalDeviceDetailView
 
 
@@ -201,80 +201,33 @@ class ReminderViewTests(TestCase):
         self.assertTrue(appointments[0].completed)
 
 
-class DocumentManagementTests(TestCase):
+class AppointmentDocumentTests(TestCase):
     def setUp(self):
         self.client = Client()
-        self.category = Category.objects.create(name="Test-Kategorie")
+        self.category = Category.objects.create(name="Test-Kategorie", mtk_interval_months=12)
         self.device = MedicalDevice.objects.create(name="Monitor", category=self.category, serial_number="SN-77")
 
-    def test_documents_page_loads(self):
-        response = self.client.get(reverse("documents"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Dokument hochladen")
-        self.assertContains(response, "Datei hier ablegen oder klicken")
-
-    def test_upload_document_from_documents_page(self):
-        file = SimpleUploadedFile("manual.txt", b"test content", content_type="text/plain")
-
+    def test_create_appointment_with_file(self):
+        file = SimpleUploadedFile("mtk_protocol.pdf", b"pdf content", content_type="application/pdf")
         response = self.client.post(
-            reverse("documents"),
+            reverse("appointment-create", kwargs={"pk": self.device.id}),
             {
-                "action": "upload_document",
-                "category": self.category.id,
-                "title": "Anleitung",
+                "appointment_type": DeviceAppointment.AppointmentType.MAINTENANCE_MTK,
+                "due_date": "2030-01-01",
+                "note": "MTK Prüfung",
                 "file": file,
             },
             follow=True,
         )
-
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.category.documents.count(), 1)
+        self.assertEqual(DeviceAppointment.objects.count(), 1)
+        appt = DeviceAppointment.objects.first()
+        self.assertTrue(bool(appt.file))
 
-    def test_documents_page_shows_categories_in_accordion(self):
-        self.category.documents.create(
-            title="Test",
-            file=SimpleUploadedFile("manual.txt", b"test", content_type="text/plain"),
-        )
-        response = self.client.get(reverse("documents"))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "accordion-button")
-        self.assertContains(response, self.category.name)
-
-    def test_delete_document_from_documents_page(self):
-        document = self.category.documents.create(
-            title="Anleitung",
-            file=SimpleUploadedFile("manual.txt", b"delete me", content_type="text/plain"),
-        )
-
-        response = self.client.post(
-            reverse("documents"),
-            {
-                "action": "delete_document",
-                "document_id": document.id,
-            },
-            follow=True,
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(self.category.documents.filter(id=document.id).exists())
-
-    def test_device_detail_shows_document_delete_button_with_confirmation(self):
-        from django.contrib.auth import get_user_model
-        user = get_user_model().objects.create_user(username="admin", password="secret", is_staff=True)
-        self.client.force_login(user)
-
-        self.category.documents.create(
-            title="Anleitung",
-            file=SimpleUploadedFile("manual.txt", b"detail", content_type="text/plain"),
-        )
-
-        response = self.client.get(reverse("device-detail", kwargs={"pk": self.device.id}))
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'name="action" value="delete_document"')
-        self.assertContains(response, "Dokument wirklich löschen?")
+        # Check detail view displays the protocol link
+        detail_response = self.client.get(reverse("device-detail", kwargs={"pk": self.device.id}))
+        self.assertEqual(detail_response.status_code, 200)
+        self.assertContains(detail_response, "Protokoll")
 
 
 class StammdatenPageTests(TestCase):
